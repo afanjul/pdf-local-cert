@@ -552,29 +552,54 @@ fn build_appearance(
         new_objects.push((image_id, 0, object_block(image_id, 0, &image)));
 
         // n0: blank background layer (matches both references' "% DSBlank").
-        let n0 = layer_form(100.0, 100.0, &[], "% DSBlank\n");
+        let n0 = layer_form(100.0, 100.0, &[], false, "% DSBlank\n");
         new_objects.push((n0_id, 0, object_block(n0_id, 0, &n0)));
 
         // n2: content layer — draws the image scaled to the box.
         let n2_content = format!("q {w:.3} 0 0 {h:.3} 0 0 cm /Im0 Do Q", w = p.w, h = p.h);
-        let n2 = layer_form(p.w, p.h, &[("Im0", image_id)], &n2_content);
+        let n2 = layer_form(p.w, p.h, &[("Im0", image_id)], false, &n2_content);
         new_objects.push((n2_id, 0, object_block(n2_id, 0, &n2)));
 
         // FRM: composes n0 over n2.
         let frm_content = "q 1 0 0 1 0 0 cm /n0 Do Q\nq 1 0 0 1 0 0 cm /n2 Do Q";
-        let frm = layer_form(p.w, p.h, &[("n0", n0_id), ("n2", n2_id)], frm_content);
+        let frm = layer_form(p.w, p.h, &[("n0", n0_id), ("n2", n2_id)], false, frm_content);
         new_objects.push((frm_id, 0, object_block(frm_id, 0, &frm)));
 
         // N: top appearance referenced by the widget's /AP /N — draws FRM.
-        let n_form = layer_form(p.w, p.h, &[("FRM", frm_id)], "q 1 0 0 1 0 0 cm /FRM Do Q");
+        let n_form = layer_form(p.w, p.h, &[("FRM", frm_id)], false, "q 1 0 0 1 0 0 cm /FRM Do Q");
         new_objects.push((ap_id, 0, object_block(ap_id, 0, &n_form)));
 
         Ok(format!(" /AP << /N {ap_id} 0 R >>"))
     } else {
-        let ap_id = *next_id; *next_id += 1;
+        // STEP C — Text-only appearance, now built with the SAME Adobe layered
+        // model (n0 blank background, n2 vector text, FRM wrapper, N top) that
+        // the image path uses. Crisp vector text (no rasterization), inside the
+        // structure Acrobat expects.
         let lines = compose_lines(p, req, signer_cn);
-        let ap = appearance_xobject(p.w, p.h, &lines);
-        new_objects.push((ap_id, 0, object_block(ap_id, 0, &ap)));
+
+        let n0_id = *next_id; *next_id += 1;
+        let n2_id = *next_id; *next_id += 1;
+        let frm_id = *next_id; *next_id += 1;
+        let ap_id = *next_id; *next_id += 1;
+
+        // n0: blank background layer.
+        let n0 = layer_form(100.0, 100.0, &[], false, "% DSBlank\n");
+        new_objects.push((n0_id, 0, object_block(n0_id, 0, &n0)));
+
+        // n2: content layer — vector text.
+        let n2_content = text_content(p.h, &lines);
+        let n2 = layer_form(p.w, p.h, &[], true, &n2_content);
+        new_objects.push((n2_id, 0, object_block(n2_id, 0, &n2)));
+
+        // FRM: composes n0 over n2.
+        let frm_content = "q 1 0 0 1 0 0 cm /n0 Do Q\nq 1 0 0 1 0 0 cm /n2 Do Q";
+        let frm = layer_form(p.w, p.h, &[("n0", n0_id), ("n2", n2_id)], false, frm_content);
+        new_objects.push((frm_id, 0, object_block(frm_id, 0, &frm)));
+
+        // N: top appearance referenced by the widget's /AP /N.
+        let n_form = layer_form(p.w, p.h, &[("FRM", frm_id)], false, "q 1 0 0 1 0 0 cm /FRM Do Q");
+        new_objects.push((ap_id, 0, object_block(ap_id, 0, &n_form)));
+
         Ok(format!(" /AP << /N {ap_id} 0 R >>"))
     }
 }
@@ -704,12 +729,14 @@ fn image_stream(w: u32, h: u32, cs: &str, smask: Option<u32>, data: &[u8]) -> Ve
 /// A layer Form XObject for the Adobe n0/n2/FRM/N signature appearance model.
 ///
 /// `xobjects` are `(name, id)` pairs placed in `/Resources /XObject` (e.g.
-/// `("Im0", image_id)` or `("FRM", frm_id)`). `/Matrix` and `/ProcSet` are
-/// spec-optional, but Acrobat regenerates a signature widget's appearance
-/// during validation and a form that omits them can make that rebuild fail.
-/// Both Acrobat's and AutoFirma's Acrobat-accepted image signatures use exactly
-/// this layered structure, so we match it byte-for-byte.
-fn layer_form(w: f64, h: f64, xobjects: &[(&str, u32)], content: &str) -> Vec<u8> {
+/// `("Im0", image_id)` or `("FRM", frm_id)`). When `with_font` is true the
+/// `/Helv` Helvetica Type1 font is declared in `/Resources /Font` so the layer
+/// can draw vector text. `/Matrix` and `/ProcSet` are spec-optional, but
+/// Acrobat regenerates a signature widget's appearance during validation and a
+/// form that omits them can make that rebuild fail. Both Acrobat's and
+/// AutoFirma's Acrobat-accepted image signatures use exactly this layered
+/// structure, so we match it byte-for-byte.
+fn layer_form(w: f64, h: f64, xobjects: &[(&str, u32)], with_font: bool, content: &str) -> Vec<u8> {
     let xobj_clause = if xobjects.is_empty() {
         String::new()
     } else {
@@ -719,10 +746,15 @@ fn layer_form(w: f64, h: f64, xobjects: &[(&str, u32)], content: &str) -> Vec<u8
             .collect();
         format!("/XObject << {refs}>> ")
     };
+    let font_clause = if with_font {
+        "/Font << /Helv << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> "
+    } else {
+        ""
+    };
     let header = format!(
         "<< /Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 {w} {h}] \
 /Matrix [1 0 0 1 0 0] \
-/Resources << /ProcSet [/PDF /Text /ImageB /ImageC /ImageI] {xobj_clause}>> \
+/Resources << /ProcSet [/PDF /Text /ImageB /ImageC /ImageI] {xobj_clause}{font_clause}>> \
 /Length {} >>\nstream\n",
         content.len()
     );
@@ -732,7 +764,9 @@ fn layer_form(w: f64, h: f64, xobjects: &[(&str, u32)], content: &str) -> Vec<u8
     out
 }
 
-fn appearance_xobject(w: f64, h: f64, lines: &[String]) -> Vec<u8> {
+/// Build the content stream that draws `lines` as vector text, top-down, from
+/// the top of an `h`-tall box. Used by the n2 layer of the layered appearance.
+fn text_content(h: f64, lines: &[String]) -> String {
     let size = 9.0_f64;
     let leading = size + 2.0;
     let mut content = String::from("q BT /Helv ");
@@ -747,15 +781,7 @@ fn appearance_xobject(w: f64, h: f64, lines: &[String]) -> Vec<u8> {
         content.push_str(") Tj\n");
     }
     content.push_str("ET Q");
-
-    let stream = format!(
-        "<< /Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 {w} {h}] \
-/Matrix [1 0 0 1 0 0] \
-/Resources << /ProcSet [/PDF /Text] /Font << /Helv << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> >> \
-/Length {} >>\nstream\n{content}\nendstream",
-        content.len()
-    );
-    stream.into_bytes()
+    content
 }
 
 fn escape_pdf_text(s: &str) -> String {

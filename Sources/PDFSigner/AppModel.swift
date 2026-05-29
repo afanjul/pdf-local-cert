@@ -185,14 +185,14 @@ final class AppModel {
         }
     }
 
-    /// Appearance rendering mode (Acrobat-validity bisection, now resolved).
-    /// `true`  = STEP 2/3: send no bitmap, core draws the appearance as vector
-    ///           text. Acrobat VALID. (Kept as a fallback / simplest path.)
-    /// `false` = STEP 5: send the rendered appearance bitmap, which core embeds
-    ///           as an OPAQUE RGB image (no /SMask) inside Adobe's layered
-    ///           n0/n2/FRM/N signature appearance model — exactly how Acrobat
-    ///           and AutoFirma do it. Acrobat VALID, with or without an image.
-    static let forceVectorTextAppearance = false
+    /// Appearance rendering mode.
+    /// `true`  = OPTION C: send no bitmap; core draws the appearance as crisp
+    ///           VECTOR TEXT inside the layered n0/n2/FRM/N model. Acrobat VALID.
+    ///           (No image/QR yet — that is Option B.)
+    /// `false` = send the rendered appearance bitmap, which core embeds as an
+    ///           OPAQUE RGB image (no /SMask) inside the same layered model.
+    ///           Acrobat VALID but text is rasterized (blurrier, larger files).
+    static let forceVectorTextAppearance = true
 
     private func renderSpec(_ placement: SignaturePlacement) -> PlacementSpec {
         if Self.forceVectorTextAppearance {
