@@ -613,7 +613,7 @@ fn build_appearance(
 
         // n2: opaque images first (drawn behind), then vector text on top.
         let mut n2_content = draw_ops;
-        n2_content.push_str(&text_content(p.h, p.text_x, &lines));
+        n2_content.push_str(&text_content(p.w, p.h, p.text_x, &lines));
         let img_ref_slice: Vec<(&str, u32)> =
             img_refs.iter().map(|(n, id)| (n.as_str(), *id)).collect();
         let n2 = layer_form(p.w, p.h, &img_ref_slice, true, &n2_content);
@@ -775,7 +775,7 @@ fn layer_form(w: f64, h: f64, xobjects: &[(&str, u32)], with_font: bool, content
         format!("/XObject << {refs}>> ")
     };
     let font_clause = if with_font {
-        "/Font << /Helv << /Type /Font /Subtype /Type1 /BaseFont /Helvetica >> >> "
+        "/Font << /Helv << /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >> >> "
     } else {
         ""
     };
@@ -794,9 +794,14 @@ fn layer_form(w: f64, h: f64, xobjects: &[(&str, u32)], with_font: bool, content
 
 /// Build the content stream that draws `lines` as vector text, top-down, from
 /// the top of an `h`-tall box. Used by the n2 layer of the layered appearance.
-fn text_content(h: f64, text_x: f64, lines: &[String]) -> String {
+/// `w` is the box width; lines are truncated with an ellipsis to fit the space
+/// between `text_x` and the right edge (minus a small pad), so text drawn in the
+/// signed appearance never overflows/clips the box.
+fn text_content(w: f64, h: f64, text_x: f64, lines: &[String]) -> String {
     let size = 9.0_f64;
     let leading = size + 2.0;
+    let right_pad = 2.0;
+    let avail = (w - text_x - right_pad).max(0.0);
     // Vertically center the text block (same formula as the preview renderer):
     // first baseline at (h + total)/2 - leading, then T* steps down by leading.
     let total = leading * lines.len() as f64;
@@ -808,14 +813,21 @@ fn text_content(h: f64, text_x: f64, lines: &[String]) -> String {
         if i > 0 {
             content.push_str("T* ");
         }
+        let fitted = truncate_to_width(line, size, avail);
         content.push('(');
-        content.push_str(&escape_pdf_text(line));
+        content.push_str(&escape_pdf_text(&fitted));
         content.push_str(") Tj\n");
     }
     content.push_str("ET Q");
     content
 }
 
+/// Escape a string for a PDF literal `( … )` string, encoded as WinAnsi
+/// (CP1252) single bytes. The n2 font is declared with /WinAnsiEncoding, so
+/// accented characters (á é í ó ú ñ ü ¿ ¡ …) must be emitted as their WinAnsi
+/// byte, not UTF-8. High bytes are written as `\ddd` octal escapes so the
+/// returned String stays valid ASCII. Characters not representable in WinAnsi
+/// become '?'.
 fn escape_pdf_text(s: &str) -> String {
     let mut out = String::new();
     for c in s.chars() {
@@ -824,9 +836,126 @@ fn escape_pdf_text(s: &str) -> String {
                 out.push('\\');
                 out.push(c);
             }
-            _ => out.push(c),
+            _ => match winansi_byte(c) {
+                Some(b) if b < 0x80 => out.push(b as char),
+                Some(b) => out.push_str(&format!("\\{b:03o}")),
+                None => out.push('?'),
+            },
         }
     }
+    out
+}
+
+/// Map a Unicode scalar to its WinAnsiEncoding (CP1252) byte, or None if it is
+/// not representable. ASCII and Latin-1 map 1:1; the 0x80–0x9F range holds the
+/// CP1252 typographic specials.
+fn winansi_byte(c: char) -> Option<u8> {
+    let cp = c as u32;
+    match cp {
+        0x20..=0x7E | 0xA0..=0xFF => Some(cp as u8),
+        0x20AC => Some(0x80), // €
+        0x201A => Some(0x82),
+        0x0192 => Some(0x83),
+        0x201E => Some(0x84),
+        0x2026 => Some(0x85), // …
+        0x2020 => Some(0x86),
+        0x2021 => Some(0x87),
+        0x02C6 => Some(0x88),
+        0x2030 => Some(0x89),
+        0x0160 => Some(0x8A),
+        0x2039 => Some(0x8B),
+        0x0152 => Some(0x8C), // Œ
+        0x017D => Some(0x8E),
+        0x2018 => Some(0x91), // ‘
+        0x2019 => Some(0x92), // ’
+        0x201C => Some(0x93), // “
+        0x201D => Some(0x94), // ”
+        0x2022 => Some(0x95), // •
+        0x2013 => Some(0x96), // –
+        0x2014 => Some(0x97), // —
+        0x02DC => Some(0x98),
+        0x2122 => Some(0x99), // ™
+        0x0161 => Some(0x9A),
+        0x203A => Some(0x9B),
+        0x0153 => Some(0x9C), // œ
+        0x017E => Some(0x9E),
+        0x0178 => Some(0x9F), // Ÿ
+        _ => None,
+    }
+}
+
+/// Helvetica glyph advance width in 1/1000 em (Standard 14 AFM metrics).
+/// Accented Latin-1 letters share their base letter's advance in Helvetica, so
+/// they are folded first. Used to measure/truncate text to fit the box.
+fn helv_width(c: char) -> u32 {
+    let c = match c {
+        'á' | 'à' | 'â' | 'ä' | 'ã' | 'å' | 'ª' => 'a',
+        'é' | 'è' | 'ê' | 'ë' => 'e',
+        'í' | 'ì' | 'î' | 'ï' => 'i',
+        'ó' | 'ò' | 'ô' | 'ö' | 'õ' | 'º' => 'o',
+        'ú' | 'ù' | 'û' | 'ü' => 'u',
+        'ñ' => 'n',
+        'ç' => 'c',
+        'Á' | 'À' | 'Â' | 'Ä' | 'Ã' | 'Å' => 'A',
+        'É' | 'È' | 'Ê' | 'Ë' => 'E',
+        'Í' | 'Ì' | 'Î' | 'Ï' => 'I',
+        'Ó' | 'Ò' | 'Ô' | 'Ö' | 'Õ' => 'O',
+        'Ú' | 'Ù' | 'Û' | 'Ü' => 'U',
+        'Ñ' => 'N',
+        'Ç' => 'C',
+        '¿' => '?',
+        '¡' => '!',
+        other => other,
+    };
+    match c {
+        ' ' => 278, '!' => 278, '"' => 355, '#' => 556, '$' => 556, '%' => 889,
+        '&' => 667, '\'' => 191, '(' => 333, ')' => 333, '*' => 389, '+' => 584,
+        ',' => 278, '-' => 333, '.' => 278, '/' => 278,
+        '0'..='9' => 556, ':' => 278, ';' => 278, '<' => 584, '=' => 584,
+        '>' => 584, '?' => 556, '@' => 1015,
+        'A' => 667, 'B' => 667, 'C' => 722, 'D' => 722, 'E' => 667, 'F' => 611,
+        'G' => 778, 'H' => 722, 'I' => 278, 'J' => 500, 'K' => 667, 'L' => 556,
+        'M' => 833, 'N' => 722, 'O' => 778, 'P' => 667, 'Q' => 778, 'R' => 722,
+        'S' => 667, 'T' => 611, 'U' => 722, 'V' => 667, 'W' => 944, 'X' => 667,
+        'Y' => 667, 'Z' => 611, '[' => 278, '\\' => 278, ']' => 278, '^' => 469,
+        '_' => 556, '`' => 333,
+        'a' => 556, 'b' => 556, 'c' => 500, 'd' => 556, 'e' => 556, 'f' => 278,
+        'g' => 556, 'h' => 556, 'i' => 222, 'j' => 222, 'k' => 500, 'l' => 222,
+        'm' => 833, 'n' => 556, 'o' => 556, 'p' => 556, 'q' => 556, 'r' => 333,
+        's' => 500, 't' => 278, 'u' => 556, 'v' => 500, 'w' => 722, 'x' => 500,
+        'y' => 500, 'z' => 500, '{' => 334, '|' => 260, '}' => 334, '~' => 584,
+        '…' => 1000,
+        _ => 556,
+    }
+}
+
+/// Width of `s` at `size` points, in points.
+fn text_width(s: &str, size: f64) -> f64 {
+    s.chars().map(|c| helv_width(c) as f64).sum::<f64>() * size / 1000.0
+}
+
+/// Truncate `line` to `max` points, appending '…' if it didn't fit (mirrors the
+/// preview's `.byTruncatingTail`, so output text doesn't get clipped by the box).
+fn truncate_to_width(line: &str, size: f64, max: f64) -> String {
+    if max <= 0.0 || text_width(line, size) <= max {
+        return line.to_string();
+    }
+    let ell_w = helv_width('…') as f64 * size / 1000.0;
+    let budget = max - ell_w;
+    if budget <= 0.0 {
+        return "…".to_string();
+    }
+    let mut acc = 0.0;
+    let mut out = String::new();
+    for c in line.chars() {
+        let w = helv_width(c) as f64 * size / 1000.0;
+        if acc + w > budget {
+            break;
+        }
+        acc += w;
+        out.push(c);
+    }
+    out.push('…');
     out
 }
 
