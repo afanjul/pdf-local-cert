@@ -1,0 +1,16 @@
+.DS_Store
+
+# Swift Package Manager
+.build/
+.swiftpm/
+
+# Rust build output
+core/target/
+target/
+
+# Local app/package builds
+build/
+DerivedData/
+
+# Local assistant/tooling state
+.claude/

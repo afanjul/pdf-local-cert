@@ -1,0 +1,29 @@
+[package]
+name = "pdfsigner-core"
+version = "0.1.0"
+edition = "2021"
+
+[[bin]]
+name = "pdfsigner-core"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+base64 = "0.22"
+sha2 = "0.10"
+lopdf = "0.34"
+der = { version = "0.7", features = ["oid", "alloc", "derive"] }
+const-oid = { version = "0.9", features = ["db"] }
+x509-cert = "0.2"
+cms = "0.2"
+spki = "0.7"
+rsa = { version = "0.9", features = ["sha2"] }
+ureq = "2"
+flate2 = "1"
+
+[profile.release]
+opt-level = "z"
+lto = true
+strip = true
+panic = "abort"
