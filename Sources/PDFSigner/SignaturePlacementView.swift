@@ -20,26 +20,38 @@ struct SignaturePlacementView: View {
     var body: some View {
         @Bindable var model = model
         VStack(spacing: 0) {
-            if let doc = model.pdfDocument, doc.pageCount > 1 {
+            if let doc = model.pdfDocument {
                 HStack(spacing: 12) {
-                    Button {
-                        model.placementPage = max(1, model.placementPage - 1)
-                    } label: { Image(systemName: "chevron.left") }
-                    .disabled(model.placementPage <= 1)
+                    if doc.pageCount > 1 {
+                        Button {
+                            model.placementPage = max(1, model.placementPage - 1)
+                        } label: { Image(systemName: "chevron.left") }
+                        .disabled(model.placementPage <= 1)
 
-                    Text("Página \(model.placementPage) de \(doc.pageCount)")
-                        .font(.callout).monospacedDigit()
+                        Text("Página \(model.placementPage) de \(doc.pageCount)")
+                            .font(.callout).monospacedDigit()
 
-                    Button {
-                        model.placementPage = min(doc.pageCount, model.placementPage + 1)
-                    } label: { Image(systemName: "chevron.right") }
-                    .disabled(model.placementPage >= doc.pageCount)
+                        Button {
+                            model.placementPage = min(doc.pageCount, model.placementPage + 1)
+                        } label: { Image(systemName: "chevron.right") }
+                        .disabled(model.placementPage >= doc.pageCount)
+                    }
 
                     Spacer()
                     if model.visibleSignature {
                         Text("Arrastra para dibujar la firma")
                             .font(.caption).foregroundStyle(.secondary)
                     }
+
+                    // Zoom controls (also ⌘/⌃ + scroll over the page).
+                    Button { model.adjustZoom(by: -0.25) } label: { Image(systemName: "minus.magnifyingglass") }
+                        .disabled(model.zoom <= AppModel.zoomMin)
+                    Button { model.resetZoom() } label: {
+                        Text("\(Int(model.zoom * 100))%").font(.callout).monospacedDigit().frame(minWidth: 38)
+                    }
+                    .help("Restablecer zoom")
+                    Button { model.adjustZoom(by: 0.25) } label: { Image(systemName: "plus.magnifyingglass") }
+                        .disabled(model.zoom >= AppModel.zoomMax)
                 }
                 .padding(8)
                 Divider()
@@ -52,10 +64,12 @@ struct SignaturePlacementView: View {
                     // Fit to width (like PDFView) so toggling the visible signature
                     // doesn't change the page scale; scroll vertically if taller.
                     // Keep a small margin to frame the page (matches PDFView).
+                    // `zoom` scales the fitted width (1.0 = fit-to-width).
                     let margin: CGFloat = 16
-                    let w = max(0, geo.size.width - margin * 2)
+                    let fitW = max(0, geo.size.width - margin * 2)
+                    let w = fitW * model.zoom
                     let h = d.width > 0 ? w * d.height / d.width : 0
-                    ScrollView(.vertical) {
+                    ScrollView([.vertical, .horizontal]) {
                         ZStack(alignment: .topLeading) {
                             if let img = pageImage {
                                 Image(nsImage: img).resizable().frame(width: w, height: h)
@@ -74,6 +88,7 @@ struct SignaturePlacementView: View {
                         .shadow(radius: 2)
                         .padding(margin)
                     }
+                    .background(ScrollZoomCatcher { delta in model.adjustZoom(by: delta) })
                 }
             }
             // Gray document canvas so the margin reads as a gutter, not white padding.

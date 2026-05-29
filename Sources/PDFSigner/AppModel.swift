@@ -15,6 +15,18 @@ final class AppModel {
     var placementNormalized: CGRect?           // fraction of displayed page
     var signAllPages = false                   // replicate the box on every page
 
+    /// PDF view zoom factor (1.0 = fit-to-width). Clamped to [zoomMin, zoomMax].
+    /// Placement is stored normalized to the displayed page, so zoom never
+    /// affects where the signature lands — it's purely a viewing convenience.
+    var zoom: CGFloat = 1.0
+    static let zoomMin: CGFloat = 1.0
+    static let zoomMax: CGFloat = 4.0
+
+    func adjustZoom(by delta: CGFloat) {
+        zoom = min(Self.zoomMax, max(Self.zoomMin, zoom + delta))
+    }
+    func resetZoom() { zoom = 1.0 }
+
     // Certificates
     var identities: [CertificateInfo] = []
     var selectedCert: CertificateInfo?
@@ -27,6 +39,11 @@ final class AppModel {
     // Qualified Spanish/EU TSA (ACCV, on the EU Trusted List) so timestamped
     // signatures validate in VALIDe. DigiCert's TSA is not a qualified EU TSA.
     var tsaURL = "http://tss.accv.es:8318/tsa"
+    /// Appearance model for visible signatures with images.
+    /// false = Compatible (images flattened opaque over white — maximum Acrobat
+    /// acceptance). true = Pro/Standards (preserve image transparency via /SMask
+    /// + transparency group; standards-correct but Acrobat may show "?").
+    var proAppearance = false
 
     // Visible appearance
     var appearance = AppearanceConfig.default
@@ -212,6 +229,7 @@ final class AppModel {
             spec.border = layout.border
             spec.background = layout.background
             spec.wrap = appearance.wrapText
+            spec.proAppearance = proAppearance
             spec.textX = Double(layout.textRect.minX)
             spec.textW = Double(layout.textRect.width)
 

@@ -10,14 +10,23 @@ struct ContentView: View {
 
     var body: some View {
         VStack(spacing: 0) {
-            Picker("", selection: $tab) {
-                Text("Firmar").tag(Tab.sign)
-                Text("Lote").tag(Tab.batch)
-                Text("Verificar").tag(Tab.verify)
+            HStack {
+                Spacer()
+                Picker("", selection: $tab) {
+                    Text("Firmar").tag(Tab.sign)
+                    Text("Lote").tag(Tab.batch)
+                    Text("Verificar").tag(Tab.verify)
+                }
+                .pickerStyle(.segmented)
+                .labelsHidden()
+                .frame(width: 320)
+                Spacer()
+                SettingsLink {
+                    Image(systemName: "gearshape")
+                } 
+                .help("Preferencias")
+                .padding(.trailing, 8)
             }
-            .pickerStyle(.segmented)
-            .labelsHidden()
-            .frame(width: 320)
             .padding(8)
 
             Divider()
@@ -78,14 +87,32 @@ struct SignTab: View {
                     Divider()
 
                     Toggle("Firma visible", isOn: $model.visibleSignature)
+                    Text("Además de firmar el documento, te permite hacer tu firma visible.")
+                        .font(.caption).foregroundStyle(.secondary)
                     if model.visibleSignature {
                         AppearanceEditorView()
                     }
 
                     Toggle("Sello de tiempo (B-T)", isOn: $model.useTimestamp)
+                    Text("Certifica que el documento existía tal como está en este momento exacto.")
+                        .font(.caption).foregroundStyle(.secondary)
                     if model.useTimestamp {
                         TextField("URL TSA", text: $model.tsaURL)
                             .font(.caption).textFieldStyle(.roundedBorder)
+                    }
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Modelo de apariencia").font(.callout)
+                        Picker("Modelo de apariencia", selection: $model.proAppearance) {
+                            Text("Compatible (Acrobat)").tag(false)
+                            Text("Pro / Estándar").tag(true)
+                        }
+                        .pickerStyle(.segmented)
+                        .labelsHidden()
+                        Text(model.proAppearance
+                            ? "Conserva la transparencia de la imagen (modelo estándar PDF)."
+                            : "Imágenes opacas sobre blanco. Máxima compatibilidad con Acrobat.")
+                            .font(.caption).foregroundStyle(.secondary)
                     }
 
                     Divider()

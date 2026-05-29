@@ -42,6 +42,13 @@ pub struct Placement {
     /// Fill the box with opaque white (vs. transparent, letting the page show).
     #[serde(default)]
     pub background: bool,
+    /// Appearance model. false = Compatible (images flattened opaque over white,
+    /// DeviceRGB, no transparency — maximum Acrobat acceptance). true =
+    /// Pro/Standards (preserve image transparency via /SMask + an isolated
+    /// transparency /Group on the n2 layer, per PDF 32000; standards-correct but
+    /// Acrobat may report "validity unknown").
+    #[serde(default)]
+    pub pro_appearance: bool,
 }
 
 fn default_text_x() -> f64 {
