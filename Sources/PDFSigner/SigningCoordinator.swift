@@ -32,6 +32,22 @@ struct PlacementSpec {
     /// Vector-text lines to render (used when `rgba` is nil). Empty => core
     /// composes a default "Firmado por: …" line itself.
     var lines: [String] = []
+    /// Box-local X (points) where the text block starts (right of any logo).
+    var textX: Double = 2
+    /// Opaque images (logo/handwriting, QR) drawn alongside the vector text.
+    var images: [PlacedImageSpec] = []
+}
+
+/// An opaque image to embed at a sub-rect of the signature box (Option B).
+/// `rgba` is straight-alpha RGBA8, `pxW`×`pxH`; `x,y,w,h` are box-local points.
+struct PlacedImageSpec {
+    var rgba: Data
+    var pxW: Int
+    var pxH: Int
+    var x: Double
+    var y: Double
+    var w: Double
+    var h: Double
 }
 
 struct SignResult: Sendable {
@@ -57,11 +73,25 @@ enum SigningCoordinator {
                 var dict: [String: Any] = [
                     "page": p.page, "x": p.x, "y": p.y, "w": p.w, "h": p.h,
                     "lines": spec.lines,
+                    "text_x": spec.textX,
                 ]
                 if let rgba = spec.rgba, spec.w > 0, spec.h > 0 {
                     let imgPath = workDir.appendingPathComponent("appearance-\(i).rgba")
                     try rgba.write(to: imgPath)
                     dict["image"] = ["rgba_path": imgPath.path, "width": spec.w, "height": spec.h]
+                }
+                if !spec.images.isEmpty {
+                    var imgs: [[String: Any]] = []
+                    for (j, pim) in spec.images.enumerated() {
+                        let imgPath = workDir.appendingPathComponent("placed-\(i)-\(j).rgba")
+                        try pim.rgba.write(to: imgPath)
+                        imgs.append([
+                            "rgba_path": imgPath.path,
+                            "width": pim.pxW, "height": pim.pxH,
+                            "x": pim.x, "y": pim.y, "w": pim.w, "h": pim.h,
+                        ])
+                    }
+                    dict["images"] = imgs
                 }
                 placements.append(dict)
             }

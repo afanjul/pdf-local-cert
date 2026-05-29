@@ -196,8 +196,28 @@ final class AppModel {
 
     private func renderSpec(_ placement: SignaturePlacement) -> PlacementSpec {
         if Self.forceVectorTextAppearance {
-            // No bitmap → core draws these lines as vector text (Acrobat-valid).
-            return PlacementSpec(placement: placement, rgba: nil, lines: composeAppearanceLines())
+            // OPTION B-1 — vector text + optional opaque logo/handwriting image,
+            // composited together in the n2 layer by the core.
+            var spec = PlacementSpec(placement: placement, rgba: nil, lines: composeAppearanceLines())
+            let pad = 4.0
+            if let path = appearance.handwrittenImagePath {
+                // Reserve the left ~38% of the box for the logo.
+                let maxW = placement.w * 0.38
+                let maxH = placement.h - 2 * pad
+                let scale: CGFloat = 3
+                if let r = AppearanceRenderer.rasterizeRGBA(
+                    path: path, maxPx: CGSize(width: maxW * scale, height: maxH * scale)) {
+                    // Convert rasterized pixel size back to points (÷ scale).
+                    let wPt = Double(r.w) / Double(scale)
+                    let hPt = Double(r.h) / Double(scale)
+                    let yPt = (placement.h - hPt) / 2
+                    spec.images = [PlacedImageSpec(
+                        rgba: r.rgba, pxW: r.w, pxH: r.h,
+                        x: pad, y: yPt, w: wPt, h: hPt)]
+                    spec.textX = pad + wPt + pad
+                }
+            }
+            return spec
         }
         guard let render = AppearanceRenderer.render(
             appearance, data: previewData(),

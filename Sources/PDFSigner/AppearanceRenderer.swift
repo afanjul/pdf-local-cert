@@ -119,6 +119,51 @@ enum AppearanceRenderer {
 
     private static let ciContext = CIContext()
 
+    /// Rasterize an image file to straight-alpha RGBA8 (rows top-to-bottom),
+    /// scaled to fit `maxPx` while preserving aspect. Returns the buffer and its
+    /// pixel size. Used to embed a logo/handwriting as an opaque image layer.
+    static func rasterizeRGBA(path: String, maxPx: CGSize) -> (rgba: Data, w: Int, h: Int)? {
+        guard let img = NSImage(contentsOfFile: path), img.size.width > 0, img.size.height > 0 else {
+            return nil
+        }
+        let aspect = img.size.height / img.size.width
+        var w = maxPx.width
+        var h = w * aspect
+        if h > maxPx.height { h = maxPx.height; w = h / aspect }
+        let pxW = max(1, Int(w.rounded()))
+        let pxH = max(1, Int(h.rounded()))
+        let bytesPerRow = pxW * 4
+        var buf = [UInt8](repeating: 0, count: pxH * bytesPerRow)
+        let cs = CGColorSpaceCreateDeviceRGB()
+        guard let ctx = buf.withUnsafeMutableBytes({ ptr in
+            CGContext(data: ptr.baseAddress, width: pxW, height: pxH,
+                      bitsPerComponent: 8, bytesPerRow: bytesPerRow, space: cs,
+                      bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
+        }) else { return nil }
+        ctx.clear(CGRect(x: 0, y: 0, width: pxW, height: pxH))
+        let gctx = NSGraphicsContext(cgContext: ctx, flipped: false)
+        NSGraphicsContext.saveGraphicsState()
+        NSGraphicsContext.current = gctx
+        img.draw(in: CGRect(x: 0, y: 0, width: pxW, height: pxH),
+                 from: .zero, operation: .sourceOver, fraction: 1)
+        NSGraphicsContext.restoreGraphicsState()
+        // Match AppearanceRenderer.render exactly: the core draws this buffer
+        // with a positive-height matrix and it comes out upright, so do NOT
+        // flip here — just unpremultiply to straight alpha.
+        var out = buf
+        var i = 0
+        while i < out.count {
+            let a = out[i + 3]
+            if a > 0 && a < 255 {
+                out[i]     = UInt8(min(255, Int(out[i])     * 255 / Int(a)))
+                out[i + 1] = UInt8(min(255, Int(out[i + 1]) * 255 / Int(a)))
+                out[i + 2] = UInt8(min(255, Int(out[i + 2]) * 255 / Int(a)))
+            }
+            i += 4
+        }
+        return (Data(out), pxW, pxH)
+    }
+
     /// Generate a crisp QR code NSImage for `payload`.
     static func qrImage(_ payload: String) -> NSImage? {
         guard let filter = CIFilter(name: "CIQRCodeGenerator") else { return nil }

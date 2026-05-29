@@ -571,11 +571,36 @@ fn build_appearance(
 
         Ok(format!(" /AP << /N {ap_id} 0 R >>"))
     } else {
-        // STEP C — Text-only appearance, now built with the SAME Adobe layered
-        // model (n0 blank background, n2 vector text, FRM wrapper, N top) that
-        // the image path uses. Crisp vector text (no rasterization), inside the
-        // structure Acrobat expects.
+        // OPTION B — Hybrid appearance in the Adobe layered model: n2 draws
+        // CRISP VECTOR TEXT plus zero or more OPAQUE images (logo/handwriting,
+        // QR), exactly how Acrobat and AutoFirma compose their n2 layer
+        // (image `Do` + BT/Tj text). No /SMask, no transparency group.
         let lines = compose_lines(p, req, signer_cn);
+
+        // Build an opaque image XObject for each placed image; collect its
+        // resource name + the n2 draw op (scaled to its sub-rect).
+        let mut img_refs: Vec<(String, u32)> = Vec::new();
+        let mut draw_ops = String::new();
+        for (i, pim) in p.images.iter().enumerate() {
+            let rgba = std::fs::read(&pim.rgba_path)
+                .map_err(|e| cerr("BAD_REQUEST", format!("read placed image: {e}")))?;
+            let expected = (pim.width as usize) * (pim.height as usize) * 4;
+            if rgba.len() != expected {
+                return Err(cerr("BAD_REQUEST", format!(
+                    "placed image size mismatch: {} != {expected}", rgba.len())));
+            }
+            let rgb = composite_over_white(&rgba);
+            let rgb_z = deflate(&rgb);
+            let img_id = *next_id; *next_id += 1;
+            let image = image_stream(pim.width, pim.height, "DeviceRGB", None, &rgb_z);
+            new_objects.push((img_id, 0, object_block(img_id, 0, &image)));
+            let name = format!("Im{i}");
+            draw_ops.push_str(&format!(
+                "q {w:.3} 0 0 {h:.3} {x:.3} {y:.3} cm /{name} Do Q\n",
+                w = pim.w, h = pim.h, x = pim.x, y = pim.y
+            ));
+            img_refs.push((name, img_id));
+        }
 
         let n0_id = *next_id; *next_id += 1;
         let n2_id = *next_id; *next_id += 1;
@@ -586,9 +611,12 @@ fn build_appearance(
         let n0 = layer_form(100.0, 100.0, &[], false, "% DSBlank\n");
         new_objects.push((n0_id, 0, object_block(n0_id, 0, &n0)));
 
-        // n2: content layer — vector text.
-        let n2_content = text_content(p.h, &lines);
-        let n2 = layer_form(p.w, p.h, &[], true, &n2_content);
+        // n2: opaque images first (drawn behind), then vector text on top.
+        let mut n2_content = draw_ops;
+        n2_content.push_str(&text_content(p.h, p.text_x, &lines));
+        let img_ref_slice: Vec<(&str, u32)> =
+            img_refs.iter().map(|(n, id)| (n.as_str(), *id)).collect();
+        let n2 = layer_form(p.w, p.h, &img_ref_slice, true, &n2_content);
         new_objects.push((n2_id, 0, object_block(n2_id, 0, &n2)));
 
         // FRM: composes n0 over n2.
@@ -766,12 +794,16 @@ fn layer_form(w: f64, h: f64, xobjects: &[(&str, u32)], with_font: bool, content
 
 /// Build the content stream that draws `lines` as vector text, top-down, from
 /// the top of an `h`-tall box. Used by the n2 layer of the layered appearance.
-fn text_content(h: f64, lines: &[String]) -> String {
+fn text_content(h: f64, text_x: f64, lines: &[String]) -> String {
     let size = 9.0_f64;
     let leading = size + 2.0;
+    // Vertically center the text block (same formula as the preview renderer):
+    // first baseline at (h + total)/2 - leading, then T* steps down by leading.
+    let total = leading * lines.len() as f64;
+    let top_y = (h + total) / 2.0 - leading;
     let mut content = String::from("q BT /Helv ");
-    content.push_str(&format!("{size} Tf {leading} TL 0 g 2 "));
-    content.push_str(&format!("{:.1} Td\n", h - leading));
+    content.push_str(&format!("{size} Tf {leading} TL 0 g {text_x:.1} "));
+    content.push_str(&format!("{top_y:.1} Td\n"));
     for (i, line) in lines.iter().enumerate() {
         if i > 0 {
             content.push_str("T* ");

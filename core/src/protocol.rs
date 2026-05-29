@@ -13,9 +13,43 @@ pub struct Placement {
     #[serde(default)]
     pub lines: Vec<String>,
     /// Optional pre-rendered appearance image (raw RGBA8, top row first).
-    /// When present, the box is drawn from this image instead of text.
+    /// When present, the WHOLE box is drawn from this image instead of text
+    /// (legacy / fallback whole-bitmap path).
     #[serde(default)]
     pub image: Option<AppearanceImage>,
+    /// X offset (box-local points) where the text block starts. Lets the shell
+    /// push text to the right of a left-placed logo. Defaults to 2.
+    #[serde(default = "default_text_x")]
+    pub text_x: f64,
+    /// Opaque images (logo/handwriting, QR) placed at sub-rects within the box,
+    /// drawn alongside vector text in the n2 layer (Option B hybrid path).
+    #[serde(default)]
+    pub images: Vec<PlacedImage>,
+    /// Draw a thin gray border around the box.
+    #[serde(default)]
+    pub border: bool,
+    /// Fill the box with opaque white (vs. transparent, letting the page show).
+    #[serde(default)]
+    pub background: bool,
+}
+
+fn default_text_x() -> f64 {
+    2.0
+}
+
+/// An opaque image placed at a sub-rectangle of the signature box. `rgba_path`
+/// is raw straight-alpha RGBA8 (`width`×`height`, rows top-to-bottom); the core
+/// composites it over white (opaque, no /SMask). `x,y,w,h` are box-local points
+/// (origin bottom-left).
+#[derive(Debug, Clone, Deserialize)]
+pub struct PlacedImage {
+    pub rgba_path: String,
+    pub width: u32,
+    pub height: u32,
+    pub x: f64,
+    pub y: f64,
+    pub w: f64,
+    pub h: f64,
 }
 
 /// A flattened appearance bitmap rendered by the shell (so on-screen preview is
