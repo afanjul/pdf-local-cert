@@ -29,6 +29,9 @@ struct PlacementSpec {
     var rgba: Data?
     var w: Int = 0
     var h: Int = 0
+    /// Vector-text lines to render (used when `rgba` is nil). Empty => core
+    /// composes a default "Firmado por: …" line itself.
+    var lines: [String] = []
 }
 
 struct SignResult: Sendable {
@@ -52,7 +55,8 @@ enum SigningCoordinator {
             for (i, spec) in req.placements.enumerated() {
                 let p = spec.placement
                 var dict: [String: Any] = [
-                    "page": p.page, "x": p.x, "y": p.y, "w": p.w, "h": p.h, "lines": [String](),
+                    "page": p.page, "x": p.x, "y": p.y, "w": p.w, "h": p.h,
+                    "lines": spec.lines,
                 ]
                 if let rgba = spec.rgba, spec.w > 0, spec.h > 0 {
                     let imgPath = workDir.appendingPathComponent("appearance-\(i).rgba")

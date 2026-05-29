@@ -185,13 +185,49 @@ final class AppModel {
         }
     }
 
+    /// INVESTIGATION STEP 2 — Acrobat validity bisection.
+    /// `false` = send a pre-rendered RGBA bitmap appearance (image + /SMask).
+    ///           Acrobat reports the signature as NOT valid.
+    /// `true`  = send no bitmap, so core draws the appearance as vector text
+    ///           (reproduces yesterday's working file and AutoFirma). Acrobat
+    ///           valid. Temporarily disables QR / handwritten-image rendering.
+    /// Flip back to re-enable the bitmap path once we know which byte Acrobat
+    /// rejects.
+    static let forceVectorTextAppearance = true
+
     private func renderSpec(_ placement: SignaturePlacement) -> PlacementSpec {
+        if Self.forceVectorTextAppearance {
+            // No bitmap → core draws these lines as vector text (Acrobat-valid).
+            return PlacementSpec(placement: placement, rgba: nil, lines: composeAppearanceLines())
+        }
         guard let render = AppearanceRenderer.render(
             appearance, data: previewData(),
             pointSize: CGSize(width: placement.w, height: placement.h)) else {
             return PlacementSpec(placement: placement, rgba: nil)
         }
         return PlacementSpec(placement: placement, rgba: render.rgba, w: render.width, h: render.height)
+    }
+
+    /// STEP 3 — compose the visible-signature text lines from the appearance
+    /// config, honoring the user's toggles. Pure text (no image) so the result
+    /// stays an Acrobat-valid vector appearance.
+    private func composeAppearanceLines() -> [String] {
+        let data = previewData()
+        var lines: [String] = []
+        if appearance.showName {
+            let label = appearance.customLabel.trimmingCharacters(in: .whitespaces)
+            lines.append(label.isEmpty ? "Firmado por: \(data.name)" : "\(label): \(data.name)")
+        }
+        if appearance.showDate {
+            lines.append("Fecha: \(data.dateString)")
+        }
+        if appearance.showReason, let r = data.reason {
+            lines.append("Motivo: \(r)")
+        }
+        if appearance.showLocation, let l = data.location {
+            lines.append("Lugar: \(l)")
+        }
+        return lines
     }
 
     /// Resolve the placement to send to core. Uses the user-drawn rectangle
