@@ -626,7 +626,7 @@ fn build_appearance(
         } else {
             (p.w - p.text_x - right_pad).max(0.0)
         };
-        n2_content.push_str(&text_content(avail, p.h, p.text_x, size, &lines));
+        n2_content.push_str(&text_content(avail, p.h, p.text_x, size, p.wrap, &lines));
         if p.border {
             // Thin gray stroke just inside the box edge.
             n2_content.push_str(&format!(
@@ -812,27 +812,31 @@ fn layer_form(w: f64, h: f64, xobjects: &[(&str, u32)], with_font: bool, content
     out
 }
 
-/// Build the content stream that draws `lines` as vector text, top-down, from
-/// the top of an `h`-tall box. Used by the n2 layer of the layered appearance.
-/// Lines are truncated with an ellipsis to fit `avail` points wide, so text
-/// drawn in the signed appearance never overflows/clips the box. `size` is the
-/// font size in points.
-fn text_content(avail: f64, h: f64, text_x: f64, size: f64, lines: &[String]) -> String {
+/// Build the content stream that draws `lines` as vector text, top-down,
+/// vertically centered in an `h`-tall box. Used by the n2 layer. When `wrap` is
+/// true, long lines are word-wrapped to `avail` points wide (adding rows);
+/// otherwise each line is truncated with an ellipsis. `size` is the font size.
+fn text_content(avail: f64, h: f64, text_x: f64, size: f64, wrap: bool, lines: &[String]) -> String {
     let leading = size + 2.0;
-    // Vertically center the text block (same formula as the preview renderer):
+    // Expand to the physical rows actually drawn (wrap adds rows).
+    let rows: Vec<String> = if wrap {
+        lines.iter().flat_map(|l| wrap_to_width(l, size, avail)).collect()
+    } else {
+        lines.iter().map(|l| truncate_to_width(l, size, avail)).collect()
+    };
+    // Vertically center the block (same formula as the preview renderer):
     // first baseline at (h + total)/2 - leading, then T* steps down by leading.
-    let total = leading * lines.len() as f64;
+    let total = leading * rows.len() as f64;
     let top_y = (h + total) / 2.0 - leading;
     let mut content = String::from("q BT /Helv ");
     content.push_str(&format!("{size} Tf {leading} TL 0 g {text_x:.1} "));
     content.push_str(&format!("{top_y:.1} Td\n"));
-    for (i, line) in lines.iter().enumerate() {
+    for (i, row) in rows.iter().enumerate() {
         if i > 0 {
             content.push_str("T* ");
         }
-        let fitted = truncate_to_width(line, size, avail);
         content.push('(');
-        content.push_str(&escape_pdf_text(&fitted));
+        content.push_str(&escape_pdf_text(row));
         content.push_str(") Tj\n");
     }
     content.push_str("ET Q");
@@ -974,6 +978,49 @@ fn truncate_to_width(line: &str, size: f64, max: f64) -> String {
     }
     out.push('…');
     out
+}
+
+/// Word-wrap `line` into rows that each fit `max` points wide. Splits on spaces;
+/// a single word longer than `max` is hard-broken by character so it never
+/// overflows the box. Returns at least one row.
+fn wrap_to_width(line: &str, size: f64, max: f64) -> Vec<String> {
+    if max <= 0.0 || text_width(line, size) <= max {
+        return vec![line.to_string()];
+    }
+    let mut rows: Vec<String> = Vec::new();
+    let mut cur = String::new();
+    for word in line.split(' ') {
+        let candidate = if cur.is_empty() { word.to_string() } else { format!("{cur} {word}") };
+        if text_width(&candidate, size) <= max {
+            cur = candidate;
+            continue;
+        }
+        // Candidate too wide: flush the current row first.
+        if !cur.is_empty() {
+            rows.push(std::mem::take(&mut cur));
+        }
+        // The word itself may exceed max — hard-break it by character.
+        if text_width(word, size) <= max {
+            cur = word.to_string();
+        } else {
+            let mut piece = String::new();
+            for c in word.chars() {
+                let trial = format!("{piece}{c}");
+                if text_width(&trial, size) > max && !piece.is_empty() {
+                    rows.push(std::mem::take(&mut piece));
+                }
+                piece.push(c);
+            }
+            cur = piece;
+        }
+    }
+    if !cur.is_empty() {
+        rows.push(cur);
+    }
+    if rows.is_empty() {
+        rows.push(String::new());
+    }
+    rows
 }
 
 fn acroform_with_field(af: &lopdf::Dictionary, annot_id: u32) -> Vec<u8> {

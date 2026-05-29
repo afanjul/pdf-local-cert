@@ -2,6 +2,90 @@ import AppKit
 import CoreGraphics
 import CoreImage
 
+/// Single source of truth for visible-signature composition — the text lines
+/// and the box-local sub-rects (logo, QR, text). BOTH the on-screen preview
+/// and the signed output derive from this, so what you see is what you sign.
+///
+/// All rects are in box-local PDF points, origin bottom-left (matching the
+/// core's coordinate system).
+struct SignatureLayout {
+    var lines: [String]
+    var fontSize: Double
+    var leading: Double
+    var textRect: CGRect
+    var logoRect: CGRect?
+    var qrRect: CGRect?
+    var border: Bool
+    var background: Bool
+}
+
+enum SignatureComposer {
+    static let pad = 4.0
+    static let logoFraction = 0.38
+    static let qrFraction = 0.40
+
+    /// The text lines, honoring the config toggles. This is THE composition
+    /// used by both preview and output (no second copy).
+    static func lines(_ config: AppearanceConfig, _ data: AppearanceData) -> [String] {
+        var lines: [String] = []
+        if config.showName {
+            let label = config.customLabel.trimmingCharacters(in: .whitespaces)
+            if config.showLabel && !label.isEmpty {
+                // Join with a single space; the label already carries its own
+                // trailing colon if the user wants one (default "Firmado por:").
+                lines.append("\(label) \(data.name)")
+            } else {
+                lines.append(data.name)
+            }
+        }
+        if config.showDate { lines.append("Fecha: \(data.dateString)") }
+        if config.showReason, let r = data.reason, !r.isEmpty { lines.append("Motivo: \(r)") }
+        if config.showLocation, let l = data.location, !l.isEmpty { lines.append("Lugar: \(l)") }
+        return lines
+    }
+
+    /// Compute the full layout for a box of `box` points. `logoAspect` is the
+    /// logo image's height/width (nil = no logo); `hasQR` reserves the right
+    /// square. Font leading matches the core (`fontSize + 2`).
+    static func layout(config: AppearanceConfig, data: AppearanceData,
+                       box: CGSize, logoAspect: Double?, hasQR: Bool) -> SignatureLayout {
+        var left = pad
+        var right = Double(box.width) - pad
+        var logoRect: CGRect? = nil
+        var qrRect: CGRect? = nil
+
+        if let aspect = logoAspect, aspect > 0 {
+            let maxW = Double(box.width) * logoFraction
+            let avail = Double(box.height) - 2 * pad
+            var w = maxW
+            var h = w * aspect
+            if h > avail { h = avail; w = h / aspect }
+            logoRect = CGRect(x: pad, y: (Double(box.height) - h) / 2, width: w, height: h)
+            left = pad + w + pad
+        }
+        if hasQR {
+            let side = min(Double(box.height) - 2 * pad, Double(box.width) * qrFraction)
+            let x = Double(box.width) - pad - side
+            qrRect = CGRect(x: x, y: (Double(box.height) - side) / 2, width: side, height: side)
+            right = x - pad
+        }
+        let textRect = CGRect(x: left, y: pad,
+                              width: max(0, right - left), height: Double(box.height) - 2 * pad)
+        let size = config.fontSize > 0 ? config.fontSize : 9
+        return SignatureLayout(
+            lines: lines(config, data), fontSize: size, leading: size + 2,
+            textRect: textRect, logoRect: logoRect, qrRect: qrRect,
+            border: config.showBorder, background: !config.transparentBackground)
+    }
+
+    /// height/width of an image file, or nil if it can't be read.
+    static func imageAspect(path: String?) -> Double? {
+        guard let path, let img = NSImage(contentsOfFile: path),
+              img.size.width > 0, img.size.height > 0 else { return nil }
+        return Double(img.size.height / img.size.width)
+    }
+}
+
 /// Renders an `AppearanceConfig` to a bitmap. The SAME render feeds both the
 /// on-screen preview (`nsImage`) and the bytes embedded by the core
 /// (`rgba`, straight-alpha RGBA8, top row first) — so preview == output.
@@ -37,61 +121,55 @@ enum AppearanceRenderer {
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = gctx
 
-        let pad = 6 * scale
-        var textRect = CGRect(x: pad, y: pad, width: CGFloat(pxW) - 2 * pad, height: CGFloat(pxH) - 2 * pad)
+        // Shared layout (same lines + geometry the signed output uses).
+        let aspect = SignatureComposer.imageAspect(path: config.handwrittenImagePath)
+        let hasQR = config.showQR && (data.qrPayload?.isEmpty == false)
+        let layout = SignatureComposer.layout(
+            config: config, data: data, box: pointSize, logoAspect: aspect, hasQR: hasQR)
+        // Box-local points → pixels.
+        func px(_ r: CGRect) -> CGRect {
+            CGRect(x: r.minX * scale, y: r.minY * scale, width: r.width * scale, height: r.height * scale)
+        }
 
-        // QR badge on the right (square, full height minus padding).
-        if config.showQR, let payload = data.qrPayload, !payload.isEmpty,
-           let qr = qrImage(payload) {
-            let side = min(CGFloat(pxH) - 2 * pad, CGFloat(pxW) * 0.4)
-            let qrRect = CGRect(x: CGFloat(pxW) - pad - side, y: (CGFloat(pxH) - side) / 2, width: side, height: side)
+        // Logo / handwritten image (left).
+        if let lr = layout.logoRect, let path = config.handwrittenImagePath,
+           let img = NSImage(contentsOfFile: path) {
+            img.draw(in: px(lr), from: .zero, operation: .sourceOver, fraction: 1)
+        }
+        // QR badge (right).
+        if let qr = layout.qrRect, let payload = data.qrPayload, let qrImg = qrImage(payload) {
             ctx.interpolationQuality = .none
-            qr.draw(in: qrRect, from: .zero, operation: .sourceOver, fraction: 1)
-            textRect.size.width = qrRect.minX - pad - textRect.minX
+            qrImg.draw(in: px(qr), from: .zero, operation: .sourceOver, fraction: 1)
         }
 
-        // Handwritten image on the left (preserve aspect).
-        if let path = config.handwrittenImagePath,
-           let img = NSImage(contentsOfFile: path), img.size.width > 0 {
-            let maxW = CGFloat(pxW) * 0.42
-            let aspect = img.size.height / img.size.width
-            var dw = maxW
-            var dh = dw * aspect
-            let avail = CGFloat(pxH) - 2 * pad
-            if dh > avail { dh = avail; dw = dh / aspect }
-            let imgRect = CGRect(x: pad, y: (CGFloat(pxH) - dh) / 2, width: dw, height: dh)
-            img.draw(in: imgRect, from: .zero, operation: .sourceOver, fraction: 1)
-            let rightEdge = textRect.maxX // preserve any QR reservation
-            textRect.origin.x = imgRect.maxX + pad
-            textRect.size.width = max(0, rightEdge - textRect.origin.x)
-        }
-
-        // Compose text lines.
-        var lines: [String] = []
-        if !config.customLabel.isEmpty { lines.append(config.customLabel) }
-        if config.showName { lines.append(data.name) }
-        if config.showReason, let r = data.reason, !r.isEmpty { lines.append("Motivo: \(r)") }
-        if config.showLocation, let l = data.location, !l.isEmpty { lines.append("Lugar: \(l)") }
-        if config.showDate { lines.append("Fecha: \(data.dateString)") }
-
-        let fontSize = config.fontSize * scale
-        let para = NSMutableParagraphStyle(); para.lineBreakMode = .byTruncatingTail
+        // Text — Helvetica (same family as the signed output), top-down,
+        // vertically centered over the FULL box height (matches the core).
+        let fontSizePx = layout.fontSize * Double(scale)
+        let leadingPx = layout.leading * Double(scale)
+        let font = NSFont(name: "Helvetica", size: fontSizePx) ?? .systemFont(ofSize: fontSizePx)
+        let tr = px(layout.textRect)
+        // When wrapping, expand each logical line into physical rows that fit
+        // tr.width (mirrors the core's word-wrap); otherwise truncate per line.
+        let para = NSMutableParagraphStyle()
+        para.lineBreakMode = config.wrapText ? .byWordWrapping : .byTruncatingTail
         let attrs: [NSAttributedString.Key: Any] = [
-            .font: NSFont.systemFont(ofSize: fontSize),
+            .font: font,
             .foregroundColor: NSColor.black,
             .paragraphStyle: para,
         ]
-        let leading = fontSize * 1.25
-        let totalH = leading * CGFloat(lines.count)
-        // Center the text block vertically, drawn top-down (flipped:false → y up).
-        var y = textRect.midY + totalH / 2 - leading
-        for line in lines {
-            let r = CGRect(x: textRect.minX, y: y, width: textRect.width, height: leading)
+        let rows: [String] = config.wrapText
+            ? layout.lines.flatMap { Self.wrapRows($0, font: font, maxWidth: tr.width) }
+            : layout.lines
+        let total = leadingPx * Double(rows.count)
+        // First line top, centered over the whole box (pxH), drawn downward.
+        var y = (Double(pxH) + total) / 2 - leadingPx
+        for line in rows {
+            let r = CGRect(x: tr.minX, y: y, width: tr.width, height: leadingPx)
             (line as NSString).draw(in: r, withAttributes: attrs)
-            y -= leading
+            y -= leadingPx
         }
 
-        if config.showBorder {
+        if layout.border {
             ctx.setStrokeColor(NSColor.gray.cgColor)
             ctx.setLineWidth(scale)
             ctx.stroke(CGRect(x: scale / 2, y: scale / 2, width: CGFloat(pxW) - scale, height: CGFloat(pxH) - scale))
@@ -115,6 +193,36 @@ enum AppearanceRenderer {
             i += 4
         }
         return AppearanceRender(nsImage: nsImage, rgba: Data(out), width: pxW, height: pxH)
+    }
+
+    /// Word-wrap `line` into physical rows that each fit `maxWidth` px at `font`,
+    /// mirroring the core's wrap_to_width (split on spaces; hard-break a word
+    /// that is itself wider than maxWidth). Pixel-space measurement.
+    static func wrapRows(_ line: String, font: NSFont, maxWidth: CGFloat) -> [String] {
+        func w(_ s: String) -> CGFloat {
+            (s as NSString).size(withAttributes: [.font: font]).width
+        }
+        if maxWidth <= 0 || w(line) <= maxWidth { return [line] }
+        var rows: [String] = []
+        var cur = ""
+        for word in line.split(separator: " ", omittingEmptySubsequences: false).map(String.init) {
+            let candidate = cur.isEmpty ? word : cur + " " + word
+            if w(candidate) <= maxWidth { cur = candidate; continue }
+            if !cur.isEmpty { rows.append(cur); cur = "" }
+            if w(word) <= maxWidth {
+                cur = word
+            } else {
+                var piece = ""
+                for c in word {
+                    let trial = piece + String(c)
+                    if w(trial) > maxWidth && !piece.isEmpty { rows.append(piece); piece = "" }
+                    piece.append(c)
+                }
+                cur = piece
+            }
+        }
+        if !cur.isEmpty { rows.append(cur) }
+        return rows.isEmpty ? [""] : rows
     }
 
     private static let ciContext = CIContext()

@@ -43,6 +43,8 @@ struct PlacementSpec {
     var border: Bool = false
     /// Fill the box with opaque white.
     var background: Bool = false
+    /// Word-wrap long lines instead of truncating them.
+    var wrap: Bool = false
     /// Opaque images (logo/handwriting, QR) drawn alongside the vector text.
     var images: [PlacedImageSpec] = []
 }
@@ -87,6 +89,7 @@ enum SigningCoordinator {
                     "font_size": spec.fontSize,
                     "border": spec.border,
                     "background": spec.background,
+                    "wrap": spec.wrap,
                 ]
                 if let rgba = spec.rgba, spec.w > 0, spec.h > 0 {
                     let imgPath = workDir.appendingPathComponent("appearance-\(i).rgba")

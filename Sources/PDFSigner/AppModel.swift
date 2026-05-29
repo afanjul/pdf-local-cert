@@ -198,47 +198,42 @@ final class AppModel {
         if Self.forceVectorTextAppearance {
             // OPTION B-2 — vector text + opaque logo/handwriting image + opaque
             // QR badge, plus optional vector border/background, composited in
-            // the n2 layer by the core.
-            var spec = PlacementSpec(placement: placement, rgba: nil, lines: composeAppearanceLines())
-            spec.fontSize = appearance.fontSize
-            spec.border = appearance.showBorder
-            spec.background = !appearance.transparentBackground
-            let pad = 4.0
+            // the n2 layer by the core. Geometry + lines come from the SHARED
+            // SignatureComposer, so this matches the on-screen preview exactly.
+            let data = previewData()
+            let box = CGSize(width: placement.w, height: placement.h)
+            let aspect = SignatureComposer.imageAspect(path: appearance.handwrittenImagePath)
+            let hasQR = appearance.showQR && (data.qrPayload?.isEmpty == false)
+            let layout = SignatureComposer.layout(
+                config: appearance, data: data, box: box, logoAspect: aspect, hasQR: hasQR)
+
+            var spec = PlacementSpec(placement: placement, rgba: nil, lines: layout.lines)
+            spec.fontSize = layout.fontSize
+            spec.border = layout.border
+            spec.background = layout.background
+            spec.wrap = appearance.wrapText
+            spec.textX = Double(layout.textRect.minX)
+            spec.textW = Double(layout.textRect.width)
+
             let scale: CGFloat = 3
             var images: [PlacedImageSpec] = []
-            var leftEdge = pad           // where text starts
-            var rightEdge = placement.w - pad  // where text must end
-
-            // Logo / handwritten image on the left (~38% of width).
-            if let path = appearance.handwrittenImagePath,
+            if let lr = layout.logoRect, let path = appearance.handwrittenImagePath,
                let r = AppearanceRenderer.rasterizeRGBA(
-                   path: path,
-                   maxPx: CGSize(width: placement.w * 0.38 * scale, height: (placement.h - 2 * pad) * scale)) {
-                let wPt = Double(r.w) / Double(scale)
-                let hPt = Double(r.h) / Double(scale)
+                   path: path, maxPx: CGSize(width: lr.width * scale, height: lr.height * scale)) {
                 images.append(PlacedImageSpec(
                     rgba: r.rgba, pxW: r.w, pxH: r.h,
-                    x: pad, y: (placement.h - hPt) / 2, w: wPt, h: hPt))
-                leftEdge = pad + wPt + pad
+                    x: Double(lr.minX), y: Double(lr.minY), w: Double(lr.width), h: Double(lr.height)))
             }
-
-            // QR badge on the right (square), if enabled.
-            if appearance.showQR, let payload = previewData().qrPayload,
-               let qr = AppearanceRenderer.qrImage(payload) {
-                let sidePt = min(placement.h - 2 * pad, placement.w * 0.4)
-                let px = max(1, Int(sidePt * scale))
-                if let rgba = AppearanceRenderer.rasterizeImageRGBA(qr, pxW: px, pxH: px, sharp: true) {
-                    let x = placement.w - pad - sidePt
+            if let qr = layout.qrRect, let payload = data.qrPayload,
+               let qrImg = AppearanceRenderer.qrImage(payload) {
+                let px = max(1, Int(qr.width * scale))
+                if let rgba = AppearanceRenderer.rasterizeImageRGBA(qrImg, pxW: px, pxH: px, sharp: true) {
                     images.append(PlacedImageSpec(
                         rgba: rgba, pxW: px, pxH: px,
-                        x: x, y: (placement.h - sidePt) / 2, w: sidePt, h: sidePt))
-                    rightEdge = x - pad
+                        x: Double(qr.minX), y: Double(qr.minY), w: Double(qr.width), h: Double(qr.height)))
                 }
             }
-
             spec.images = images
-            spec.textX = leftEdge
-            spec.textW = max(0, rightEdge - leftEdge)
             return spec
         }
         guard let render = AppearanceRenderer.render(
@@ -247,28 +242,6 @@ final class AppModel {
             return PlacementSpec(placement: placement, rgba: nil)
         }
         return PlacementSpec(placement: placement, rgba: render.rgba, w: render.width, h: render.height)
-    }
-
-    /// STEP 3 — compose the visible-signature text lines from the appearance
-    /// config, honoring the user's toggles. Pure text (no image) so the result
-    /// stays an Acrobat-valid vector appearance.
-    private func composeAppearanceLines() -> [String] {
-        let data = previewData()
-        var lines: [String] = []
-        if appearance.showName {
-            let label = appearance.customLabel.trimmingCharacters(in: .whitespaces)
-            lines.append(label.isEmpty ? "Firmado por: \(data.name)" : "\(label): \(data.name)")
-        }
-        if appearance.showDate {
-            lines.append("Fecha: \(data.dateString)")
-        }
-        if appearance.showReason, let r = data.reason {
-            lines.append("Motivo: \(r)")
-        }
-        if appearance.showLocation, let l = data.location {
-            lines.append("Lugar: \(l)")
-        }
-        return lines
     }
 
     /// Resolve the placement to send to core. Uses the user-drawn rectangle

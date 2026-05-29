@@ -29,6 +29,9 @@ pub struct Placement {
     /// Font size (points) for the text lines. 0 = default (9).
     #[serde(default)]
     pub font_size: f64,
+    /// Word-wrap lines to fit the text width instead of truncating with "…".
+    #[serde(default)]
+    pub wrap: bool,
     /// Opaque images (logo/handwriting, QR) placed at sub-rects within the box,
     /// drawn alongside vector text in the n2 layer (Option B hybrid path).
     #[serde(default)]

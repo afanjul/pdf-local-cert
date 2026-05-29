@@ -22,6 +22,13 @@ struct AppearanceEditorView: View {
             }
 
             Toggle("Nombre", isOn: $model.appearance.showName)
+            if model.appearance.showName {
+                Toggle("Etiqueta", isOn: $model.appearance.showLabel)
+                if model.appearance.showLabel {
+                    TextField("Etiqueta", text: $model.appearance.customLabel)
+                        .textFieldStyle(.roundedBorder)
+                }
+            }
             Toggle("Fecha", isOn: $model.appearance.showDate)
             Toggle("Motivo", isOn: $model.appearance.showReason)
             if model.appearance.showReason {
@@ -32,11 +39,9 @@ struct AppearanceEditorView: View {
                 TextField("Lugar", text: $model.location).textFieldStyle(.roundedBorder)
             }
 
-            TextField("Etiqueta (opcional)", text: $model.appearance.customLabel)
-                .textFieldStyle(.roundedBorder)
-
             Toggle("Borde", isOn: $model.appearance.showBorder)
             Toggle("Fondo transparente", isOn: $model.appearance.transparentBackground)
+            Toggle("Ajustar texto (multilínea)", isOn: $model.appearance.wrapText)
             Toggle("Código QR de verificación", isOn: $model.appearance.showQR)
             Toggle("Firmar en todas las páginas", isOn: $model.signAllPages)
 
