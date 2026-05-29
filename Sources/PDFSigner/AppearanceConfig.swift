@@ -11,7 +11,7 @@ struct AppearanceConfig: Codable, Equatable, Sendable {
     /// Path to an imported handwritten-signature PNG (transparent), if any.
     var handwrittenImagePath: String?
     var fontSize: Double = 9
-    var showBorder = true
+    var showBorder = false
     /// Transparent box (straight alpha) vs. opaque white card.
     var transparentBackground = false
     /// Draw a verification QR badge on the right of the box.

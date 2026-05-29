@@ -132,6 +132,14 @@ enum AppearanceRenderer {
         if h > maxPx.height { h = maxPx.height; w = h / aspect }
         let pxW = max(1, Int(w.rounded()))
         let pxH = max(1, Int(h.rounded()))
+        guard let rgba = rasterizeImageRGBA(img, pxW: pxW, pxH: pxH, sharp: false) else { return nil }
+        return (rgba, pxW, pxH)
+    }
+
+    /// Rasterize an `NSImage` to straight-alpha RGBA8 (rows top-to-bottom) at an
+    /// exact pixel size. `sharp` disables interpolation (for QR codes). The
+    /// buffer orientation matches `render()` so the core embeds it upright.
+    static func rasterizeImageRGBA(_ img: NSImage, pxW: Int, pxH: Int, sharp: Bool) -> Data? {
         let bytesPerRow = pxW * 4
         var buf = [UInt8](repeating: 0, count: pxH * bytesPerRow)
         let cs = CGColorSpaceCreateDeviceRGB()
@@ -141,6 +149,7 @@ enum AppearanceRenderer {
                       bitmapInfo: CGImageAlphaInfo.premultipliedLast.rawValue)
         }) else { return nil }
         ctx.clear(CGRect(x: 0, y: 0, width: pxW, height: pxH))
+        if sharp { ctx.interpolationQuality = .none }
         let gctx = NSGraphicsContext(cgContext: ctx, flipped: false)
         NSGraphicsContext.saveGraphicsState()
         NSGraphicsContext.current = gctx
@@ -161,7 +170,7 @@ enum AppearanceRenderer {
             }
             i += 4
         }
-        return (Data(out), pxW, pxH)
+        return Data(out)
     }
 
     /// Generate a crisp QR code NSImage for `payload`.

@@ -611,9 +611,29 @@ fn build_appearance(
         let n0 = layer_form(100.0, 100.0, &[], false, "% DSBlank\n");
         new_objects.push((n0_id, 0, object_block(n0_id, 0, &n0)));
 
-        // n2: opaque images first (drawn behind), then vector text on top.
-        let mut n2_content = draw_ops;
-        n2_content.push_str(&text_content(p.w, p.h, p.text_x, &lines));
+        // n2: background fill (behind), opaque images, then vector text, then
+        // border (on top) — all vector except the placed images.
+        let mut n2_content = String::new();
+        if p.background {
+            // Opaque white fill of the whole box.
+            n2_content.push_str(&format!("q 1 1 1 rg 0 0 {w:.3} {h:.3} re f Q\n", w = p.w, h = p.h));
+        }
+        n2_content.push_str(&draw_ops);
+        let size = if p.font_size > 0.0 { p.font_size } else { 9.0 };
+        let right_pad = 2.0;
+        let avail = if p.text_w > 0.0 {
+            p.text_w
+        } else {
+            (p.w - p.text_x - right_pad).max(0.0)
+        };
+        n2_content.push_str(&text_content(avail, p.h, p.text_x, size, &lines));
+        if p.border {
+            // Thin gray stroke just inside the box edge.
+            n2_content.push_str(&format!(
+                "q 0.5 0.5 0.5 RG 1 w 0.5 0.5 {w:.3} {h:.3} re S Q\n",
+                w = p.w - 1.0, h = p.h - 1.0
+            ));
+        }
         let img_ref_slice: Vec<(&str, u32)> =
             img_refs.iter().map(|(n, id)| (n.as_str(), *id)).collect();
         let n2 = layer_form(p.w, p.h, &img_ref_slice, true, &n2_content);
@@ -794,14 +814,11 @@ fn layer_form(w: f64, h: f64, xobjects: &[(&str, u32)], with_font: bool, content
 
 /// Build the content stream that draws `lines` as vector text, top-down, from
 /// the top of an `h`-tall box. Used by the n2 layer of the layered appearance.
-/// `w` is the box width; lines are truncated with an ellipsis to fit the space
-/// between `text_x` and the right edge (minus a small pad), so text drawn in the
-/// signed appearance never overflows/clips the box.
-fn text_content(w: f64, h: f64, text_x: f64, lines: &[String]) -> String {
-    let size = 9.0_f64;
+/// Lines are truncated with an ellipsis to fit `avail` points wide, so text
+/// drawn in the signed appearance never overflows/clips the box. `size` is the
+/// font size in points.
+fn text_content(avail: f64, h: f64, text_x: f64, size: f64, lines: &[String]) -> String {
     let leading = size + 2.0;
-    let right_pad = 2.0;
-    let avail = (w - text_x - right_pad).max(0.0);
     // Vertically center the text block (same formula as the preview renderer):
     // first baseline at (h + total)/2 - leading, then T* steps down by leading.
     let total = leading * lines.len() as f64;

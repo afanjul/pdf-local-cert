@@ -34,6 +34,15 @@ struct PlacementSpec {
     var lines: [String] = []
     /// Box-local X (points) where the text block starts (right of any logo).
     var textX: Double = 2
+    /// Width (points) for the text block; 0 = auto (to right edge). Reserves
+    /// space for a right-side QR.
+    var textW: Double = 0
+    /// Text font size in points; 0 = core default (9).
+    var fontSize: Double = 0
+    /// Draw a thin gray border around the box.
+    var border: Bool = false
+    /// Fill the box with opaque white.
+    var background: Bool = false
     /// Opaque images (logo/handwriting, QR) drawn alongside the vector text.
     var images: [PlacedImageSpec] = []
 }
@@ -74,6 +83,10 @@ enum SigningCoordinator {
                     "page": p.page, "x": p.x, "y": p.y, "w": p.w, "h": p.h,
                     "lines": spec.lines,
                     "text_x": spec.textX,
+                    "text_w": spec.textW,
+                    "font_size": spec.fontSize,
+                    "border": spec.border,
+                    "background": spec.background,
                 ]
                 if let rgba = spec.rgba, spec.w > 0, spec.h > 0 {
                     let imgPath = workDir.appendingPathComponent("appearance-\(i).rgba")

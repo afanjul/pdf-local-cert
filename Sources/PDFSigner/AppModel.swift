@@ -196,27 +196,49 @@ final class AppModel {
 
     private func renderSpec(_ placement: SignaturePlacement) -> PlacementSpec {
         if Self.forceVectorTextAppearance {
-            // OPTION B-1 — vector text + optional opaque logo/handwriting image,
-            // composited together in the n2 layer by the core.
+            // OPTION B-2 — vector text + opaque logo/handwriting image + opaque
+            // QR badge, plus optional vector border/background, composited in
+            // the n2 layer by the core.
             var spec = PlacementSpec(placement: placement, rgba: nil, lines: composeAppearanceLines())
+            spec.fontSize = appearance.fontSize
+            spec.border = appearance.showBorder
+            spec.background = !appearance.transparentBackground
             let pad = 4.0
-            if let path = appearance.handwrittenImagePath {
-                // Reserve the left ~38% of the box for the logo.
-                let maxW = placement.w * 0.38
-                let maxH = placement.h - 2 * pad
-                let scale: CGFloat = 3
-                if let r = AppearanceRenderer.rasterizeRGBA(
-                    path: path, maxPx: CGSize(width: maxW * scale, height: maxH * scale)) {
-                    // Convert rasterized pixel size back to points (÷ scale).
-                    let wPt = Double(r.w) / Double(scale)
-                    let hPt = Double(r.h) / Double(scale)
-                    let yPt = (placement.h - hPt) / 2
-                    spec.images = [PlacedImageSpec(
-                        rgba: r.rgba, pxW: r.w, pxH: r.h,
-                        x: pad, y: yPt, w: wPt, h: hPt)]
-                    spec.textX = pad + wPt + pad
+            let scale: CGFloat = 3
+            var images: [PlacedImageSpec] = []
+            var leftEdge = pad           // where text starts
+            var rightEdge = placement.w - pad  // where text must end
+
+            // Logo / handwritten image on the left (~38% of width).
+            if let path = appearance.handwrittenImagePath,
+               let r = AppearanceRenderer.rasterizeRGBA(
+                   path: path,
+                   maxPx: CGSize(width: placement.w * 0.38 * scale, height: (placement.h - 2 * pad) * scale)) {
+                let wPt = Double(r.w) / Double(scale)
+                let hPt = Double(r.h) / Double(scale)
+                images.append(PlacedImageSpec(
+                    rgba: r.rgba, pxW: r.w, pxH: r.h,
+                    x: pad, y: (placement.h - hPt) / 2, w: wPt, h: hPt))
+                leftEdge = pad + wPt + pad
+            }
+
+            // QR badge on the right (square), if enabled.
+            if appearance.showQR, let payload = previewData().qrPayload,
+               let qr = AppearanceRenderer.qrImage(payload) {
+                let sidePt = min(placement.h - 2 * pad, placement.w * 0.4)
+                let px = max(1, Int(sidePt * scale))
+                if let rgba = AppearanceRenderer.rasterizeImageRGBA(qr, pxW: px, pxH: px, sharp: true) {
+                    let x = placement.w - pad - sidePt
+                    images.append(PlacedImageSpec(
+                        rgba: rgba, pxW: px, pxH: px,
+                        x: x, y: (placement.h - sidePt) / 2, w: sidePt, h: sidePt))
+                    rightEdge = x - pad
                 }
             }
+
+            spec.images = images
+            spec.textX = leftEdge
+            spec.textW = max(0, rightEdge - leftEdge)
             return spec
         }
         guard let render = AppearanceRenderer.render(

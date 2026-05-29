@@ -21,6 +21,14 @@ pub struct Placement {
     /// push text to the right of a left-placed logo. Defaults to 2.
     #[serde(default = "default_text_x")]
     pub text_x: f64,
+    /// Width (box-local points) available to the text block. 0 = auto (box
+    /// width minus text_x minus a small pad). Lets the shell reserve space for a
+    /// right-side QR badge.
+    #[serde(default)]
+    pub text_w: f64,
+    /// Font size (points) for the text lines. 0 = default (9).
+    #[serde(default)]
+    pub font_size: f64,
     /// Opaque images (logo/handwriting, QR) placed at sub-rects within the box,
     /// drawn alongside vector text in the n2 layer (Option B hybrid path).
     #[serde(default)]
