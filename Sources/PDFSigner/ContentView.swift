@@ -91,7 +91,10 @@ struct SignTab: View {
                         .font(.caption).foregroundStyle(.secondary)
                     if model.visibleSignature {
                         AppearanceEditorView()
+                        Toggle("Firmar en todas las páginas", isOn: $model.signAllPages)
                     }
+
+                    Divider()
 
                     Toggle("Sello de tiempo (B-T)", isOn: $model.useTimestamp)
                     Text("Certifica que el documento existía tal como está en este momento exacto.")
@@ -99,20 +102,6 @@ struct SignTab: View {
                     if model.useTimestamp {
                         TextField("URL TSA", text: $model.tsaURL)
                             .font(.caption).textFieldStyle(.roundedBorder)
-                    }
-
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Modelo de apariencia").font(.callout)
-                        Picker("Modelo de apariencia", selection: $model.proAppearance) {
-                            Text("Compatible (Acrobat)").tag(false)
-                            Text("Pro / Estándar").tag(true)
-                        }
-                        .pickerStyle(.segmented)
-                        .labelsHidden()
-                        Text(model.proAppearance
-                            ? "Conserva la transparencia de la imagen (modelo estándar PDF)."
-                            : "Imágenes opacas sobre blanco. Máxima compatibilidad con Acrobat.")
-                            .font(.caption).foregroundStyle(.secondary)
                     }
 
                     Divider()
