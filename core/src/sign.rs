@@ -525,8 +525,12 @@ fn build_appearance(
     new_objects: &mut Vec<(u32, u16, Vec<u8>)>,
 ) -> Result<String, CoreErr> {
     if let Some(img) = &p.image {
-        // Image appearance: RGB image XObject + grayscale SMask + Form that
-        // scales the image (unit square) to the box.
+        // STEP 5 — Image appearance built with Adobe's layered signature
+        // appearance model (n0 blank background, n2 content, FRM wrapper, N
+        // top), which is exactly how BOTH Acrobat and AutoFirma structure an
+        // image signature appearance. A single flat image form (Step 4) is
+        // rejected by Acrobat; the layered model validates.
+        // Image is OPAQUE RGB (no /SMask) — composited over white.
         let rgba = std::fs::read(&img.rgba_path)
             .map_err(|e| cerr("BAD_REQUEST", format!("read appearance image: {e}")))?;
         let expected = (img.width as usize) * (img.height as usize) * 4;
@@ -534,22 +538,37 @@ fn build_appearance(
             return Err(cerr("BAD_REQUEST", format!(
                 "appearance image size mismatch: {} != {expected}", rgba.len())));
         }
-        let (rgb, alpha) = split_rgba(&rgba);
+        let rgb = composite_over_white(&rgba);
         let rgb_z = deflate(&rgb);
-        let alpha_z = deflate(&alpha);
 
-        let smask_id = *next_id; *next_id += 1;
         let image_id = *next_id; *next_id += 1;
+        let n0_id = *next_id; *next_id += 1;
+        let n2_id = *next_id; *next_id += 1;
+        let frm_id = *next_id; *next_id += 1;
         let ap_id = *next_id; *next_id += 1;
 
-        let smask = image_stream(img.width, img.height, "DeviceGray", None, &alpha_z);
-        new_objects.push((smask_id, 0, object_block(smask_id, 0, &smask)));
-        let image = image_stream(img.width, img.height, "DeviceRGB", Some(smask_id), &rgb_z);
+        // Im0: opaque image, no SMask.
+        let image = image_stream(img.width, img.height, "DeviceRGB", None, &rgb_z);
         new_objects.push((image_id, 0, object_block(image_id, 0, &image)));
 
-        let content = format!("q {w:.3} 0 0 {h:.3} 0 0 cm /Im0 Do Q", w = p.w, h = p.h);
-        let form = form_image_xobject(p.w, p.h, image_id, &content);
-        new_objects.push((ap_id, 0, object_block(ap_id, 0, &form)));
+        // n0: blank background layer (matches both references' "% DSBlank").
+        let n0 = layer_form(100.0, 100.0, &[], "% DSBlank\n");
+        new_objects.push((n0_id, 0, object_block(n0_id, 0, &n0)));
+
+        // n2: content layer — draws the image scaled to the box.
+        let n2_content = format!("q {w:.3} 0 0 {h:.3} 0 0 cm /Im0 Do Q", w = p.w, h = p.h);
+        let n2 = layer_form(p.w, p.h, &[("Im0", image_id)], &n2_content);
+        new_objects.push((n2_id, 0, object_block(n2_id, 0, &n2)));
+
+        // FRM: composes n0 over n2.
+        let frm_content = "q 1 0 0 1 0 0 cm /n0 Do Q\nq 1 0 0 1 0 0 cm /n2 Do Q";
+        let frm = layer_form(p.w, p.h, &[("n0", n0_id), ("n2", n2_id)], frm_content);
+        new_objects.push((frm_id, 0, object_block(frm_id, 0, &frm)));
+
+        // N: top appearance referenced by the widget's /AP /N — draws FRM.
+        let n_form = layer_form(p.w, p.h, &[("FRM", frm_id)], "q 1 0 0 1 0 0 cm /FRM Do Q");
+        new_objects.push((ap_id, 0, object_block(ap_id, 0, &n_form)));
+
         Ok(format!(" /AP << /N {ap_id} 0 R >>"))
     } else {
         let ap_id = *next_id; *next_id += 1;
@@ -637,16 +656,21 @@ fn add_widgets_to_page(
     Ok(())
 }
 
-/// Split interleaved RGBA8 into (RGB, alpha) planes.
-fn split_rgba(rgba: &[u8]) -> (Vec<u8>, Vec<u8>) {
+/// Composite straight-alpha RGBA8 over a white background, returning opaque
+/// RGB8. Matches how Acrobat / AutoFirma embed a (possibly transparent)
+/// signature image: flattened onto white, no soft mask.
+fn composite_over_white(rgba: &[u8]) -> Vec<u8> {
     let px = rgba.len() / 4;
     let mut rgb = Vec::with_capacity(px * 3);
-    let mut alpha = Vec::with_capacity(px);
     for chunk in rgba.chunks_exact(4) {
-        rgb.extend_from_slice(&chunk[0..3]);
-        alpha.push(chunk[3]);
+        let a = chunk[3] as u32;
+        // out = src*a + white*(255-a), rounded, all in 0..=255.
+        for &c in &chunk[0..3] {
+            let v = (c as u32 * a + 255 * (255 - a) + 127) / 255;
+            rgb.push(v as u8);
+        }
     }
-    (rgb, alpha)
+    rgb
 }
 
 /// zlib-compress (PDF /FlateDecode).
@@ -677,19 +701,28 @@ fn image_stream(w: u32, h: u32, cs: &str, smask: Option<u32>, data: &[u8]) -> Ve
     out
 }
 
-/// A Form XObject that references one image as `/Im0`.
+/// A layer Form XObject for the Adobe n0/n2/FRM/N signature appearance model.
 ///
-/// `/Matrix` and `/ProcSet` are spec-optional but Adobe Acrobat regenerates a
-/// signature widget's appearance during validation, and an appearance form that
-/// omits them can make that rebuild fail with "An error occurred while attempting
-/// to validate this signature" — even though lenient validators (DSS, pyHanko)
-/// that never render the appearance report the signature as valid. AutoFirma's
-/// Acrobat-accepted visible signatures always include both, so we match them.
-fn form_image_xobject(w: f64, h: f64, image_id: u32, content: &str) -> Vec<u8> {
+/// `xobjects` are `(name, id)` pairs placed in `/Resources /XObject` (e.g.
+/// `("Im0", image_id)` or `("FRM", frm_id)`). `/Matrix` and `/ProcSet` are
+/// spec-optional, but Acrobat regenerates a signature widget's appearance
+/// during validation and a form that omits them can make that rebuild fail.
+/// Both Acrobat's and AutoFirma's Acrobat-accepted image signatures use exactly
+/// this layered structure, so we match it byte-for-byte.
+fn layer_form(w: f64, h: f64, xobjects: &[(&str, u32)], content: &str) -> Vec<u8> {
+    let xobj_clause = if xobjects.is_empty() {
+        String::new()
+    } else {
+        let refs: String = xobjects
+            .iter()
+            .map(|(name, id)| format!("/{name} {id} 0 R "))
+            .collect();
+        format!("/XObject << {refs}>> ")
+    };
     let header = format!(
         "<< /Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 {w} {h}] \
 /Matrix [1 0 0 1 0 0] \
-/Resources << /ProcSet [/PDF /ImageB /ImageC /ImageI] /XObject << /Im0 {image_id} 0 R >> >> \
+/Resources << /ProcSet [/PDF /Text /ImageB /ImageC /ImageI] {xobj_clause}>> \
 /Length {} >>\nstream\n",
         content.len()
     );

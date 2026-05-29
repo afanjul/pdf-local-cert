@@ -185,15 +185,14 @@ final class AppModel {
         }
     }
 
-    /// INVESTIGATION STEP 2 — Acrobat validity bisection.
-    /// `false` = send a pre-rendered RGBA bitmap appearance (image + /SMask).
-    ///           Acrobat reports the signature as NOT valid.
-    /// `true`  = send no bitmap, so core draws the appearance as vector text
-    ///           (reproduces yesterday's working file and AutoFirma). Acrobat
-    ///           valid. Temporarily disables QR / handwritten-image rendering.
-    /// Flip back to re-enable the bitmap path once we know which byte Acrobat
-    /// rejects.
-    static let forceVectorTextAppearance = true
+    /// Appearance rendering mode (Acrobat-validity bisection, now resolved).
+    /// `true`  = STEP 2/3: send no bitmap, core draws the appearance as vector
+    ///           text. Acrobat VALID. (Kept as a fallback / simplest path.)
+    /// `false` = STEP 5: send the rendered appearance bitmap, which core embeds
+    ///           as an OPAQUE RGB image (no /SMask) inside Adobe's layered
+    ///           n0/n2/FRM/N signature appearance model — exactly how Acrobat
+    ///           and AutoFirma do it. Acrobat VALID, with or without an image.
+    static let forceVectorTextAppearance = false
 
     private func renderSpec(_ placement: SignaturePlacement) -> PlacementSpec {
         if Self.forceVectorTextAppearance {
