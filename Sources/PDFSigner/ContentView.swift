@@ -9,10 +9,16 @@ struct ContentView: View {
     enum Tab { case sign, batch, verify }
 
     var body: some View {
-        VStack(spacing: 0) {
-            HStack {
-                Spacer()
-                Picker("", selection: $tab) {
+        Group {
+            switch tab {
+            case .sign: SignTab()
+            case .batch: BatchView()
+            case .verify: VerifierView()
+            }
+        }
+        .toolbar {
+            ToolbarItem(placement: .principal) {
+                Picker("Sección", selection: $tab) {
                     Text("Firmar").tag(Tab.sign)
                     Text("Lote").tag(Tab.batch)
                     Text("Verificar").tag(Tab.verify)
@@ -20,21 +26,20 @@ struct ContentView: View {
                 .pickerStyle(.segmented)
                 .labelsHidden()
                 .frame(width: 320)
-                Spacer()
-                SettingsLink {
-                    Image(systemName: "gearshape")
-                } 
-                .help("Preferencias")
-                .padding(.trailing, 8)
             }
-            .padding(8)
-
-            Divider()
-
-            switch tab {
-            case .sign: SignTab()
-            case .batch: BatchView()
-            case .verify: VerifierView()
+            ToolbarItemGroup(placement: .primaryAction) {
+                if tab == .sign, model.pdfDocument != nil {
+                    Button {
+                        model.clearDocument()
+                    } label: {
+                        Label("Nuevo", systemImage: "doc.badge.plus")
+                    }
+                    .help("Cerrar el PDF y volver al inicio")
+                }
+                SettingsLink {
+                    Label("Preferencias", systemImage: "gearshape")
+                }
+                .help("Preferencias")
             }
         }
         .task { model.loadIdentities() }
@@ -198,7 +203,8 @@ struct DropZone: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background {
             RoundedRectangle(cornerRadius: 14)
-                .fill(isActive ? Color.accentColor.opacity(0.08) : Color(nsColor: .controlBackgroundColor))
+                .fill(isActive ? AnyShapeStyle(Color.accentColor.opacity(0.08))
+                               : AnyShapeStyle(.regularMaterial))
         }
         .overlay {
             RoundedRectangle(cornerRadius: 14)

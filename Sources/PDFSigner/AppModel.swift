@@ -98,6 +98,18 @@ final class AppModel {
         statusMessage = pdfDocument == nil ? "No se pudo abrir el PDF." : ""
     }
 
+    /// Close the current document and return to the drop zone, resetting the
+    /// per-document view/placement state (but keeping signing options/appearance).
+    func clearDocument() {
+        documentURL = nil
+        pdfDocument = nil
+        placementPage = 1
+        placementNormalized = nil
+        zoom = 1.0
+        statusMessage = ""
+        lastError = nil
+    }
+
     func sign() async {
         guard let url = documentURL else { lastError = SigningError.noDocument.errorDescription; return }
         guard let cert = selectedCert else { lastError = SigningError.noCertificate.errorDescription; return }

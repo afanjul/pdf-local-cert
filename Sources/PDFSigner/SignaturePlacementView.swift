@@ -27,6 +27,7 @@ struct SignaturePlacementView: View {
                             model.placementPage = max(1, model.placementPage - 1)
                         } label: { Image(systemName: "chevron.left") }
                         .disabled(model.placementPage <= 1)
+                        .accessibilityLabel("Página anterior")
 
                         Text("Página \(model.placementPage) de \(doc.pageCount)")
                             .font(.callout).monospacedDigit()
@@ -35,6 +36,7 @@ struct SignaturePlacementView: View {
                             model.placementPage = min(doc.pageCount, model.placementPage + 1)
                         } label: { Image(systemName: "chevron.right") }
                         .disabled(model.placementPage >= doc.pageCount)
+                        .accessibilityLabel("Página siguiente")
                     }
 
                     Spacer()
@@ -46,12 +48,15 @@ struct SignaturePlacementView: View {
                     // Zoom controls (also ⌘/⌃ + scroll over the page).
                     Button { model.adjustZoom(by: -0.25) } label: { Image(systemName: "minus.magnifyingglass") }
                         .disabled(model.zoom <= AppModel.zoomMin)
+                        .accessibilityLabel("Reducir zoom")
                     Button { model.resetZoom() } label: {
                         Text("\(Int(model.zoom * 100))%").font(.callout).monospacedDigit().frame(minWidth: 38)
                     }
                     .help("Restablecer zoom")
+                    .accessibilityLabel("Zoom \(Int(model.zoom * 100)) por ciento. Restablecer")
                     Button { model.adjustZoom(by: 0.25) } label: { Image(systemName: "plus.magnifyingglass") }
                         .disabled(model.zoom >= AppModel.zoomMax)
+                        .accessibilityLabel("Aumentar zoom")
                 }
                 .padding(8)
                 Divider()

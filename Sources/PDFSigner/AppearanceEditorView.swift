@@ -24,7 +24,9 @@ struct AppearanceEditorView: View {
                     .aspectRatio(200.0 / 60.0, contentMode: .fit)
                     .frame(maxWidth: .infinity)
                     .background(Color(nsColor: .textBackgroundColor))
-                    .overlay(RoundedRectangle(cornerRadius: 4).stroke(.quaternary))
+                    .clipShape(RoundedRectangle(cornerRadius: 6))
+                    .overlay(RoundedRectangle(cornerRadius: 6).stroke(.quaternary))
+                    .shadow(color: .black.opacity(0.08), radius: 3, y: 1)
             }
 
             accordion("Contenido", .content) { contentSection($model) }
@@ -66,9 +68,10 @@ struct AppearanceEditorView: View {
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.vertical, 7)
                 .padding(.horizontal, 10)
-                // Opaque header fill so the collapsing content disappears
-                // behind it instead of showing through.
-                .background(Color(nsColor: .controlBackgroundColor))
+                // Material header (depth) that's opaque enough to hide the
+                // collapsing content tucking behind it. thickMaterial is the
+                // most opaque system material.
+                .background(.thickMaterial)
                 .contentShape(Rectangle())
             }
             .buttonStyle(.plain)
@@ -91,6 +94,10 @@ struct AppearanceEditorView: View {
         // Clip so the content sliding in/out during the expand/collapse
         // animation stays inside the rounded card (like CSS overflow:hidden).
         .clipShape(RoundedRectangle(cornerRadius: 8))
+        // Hairline border + subtle shadow for depth (Liquid Glass depth, not
+        // heavy shadows). Shadow after clip so it renders outside the bounds.
+        .overlay(RoundedRectangle(cornerRadius: 8).strokeBorder(.quaternary, lineWidth: 0.5))
+        .shadow(color: .black.opacity(0.05), radius: 2, y: 1)
     }
 
     // MARK: Sections
