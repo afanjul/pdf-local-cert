@@ -16,4 +16,8 @@
     <InvariantGlobalization>true</InvariantGlobalization>
   </PropertyGroup>
 
+  <ItemGroup>
+    <ProjectReference Include="..\PdfLocalCert.Core\PdfLocalCert.Core.csproj" />
+  </ItemGroup>
+
 </Project>
