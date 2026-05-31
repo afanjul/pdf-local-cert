@@ -1,4 +1,6 @@
+# macOS
 .DS_Store
+._*
 
 # Swift Package Manager
 .build/
@@ -8,9 +10,25 @@
 core/target/
 target/
 
-# Local app/package builds
+# Local app/package builds (the built app + dmg live here)
 build/
 DerivedData/
+.local-build/
+
+# Test fixtures (private signed PDFs, sample certs)
+tests/
+
+# Secrets / signing material
+*.p12
+*.pfx
+*.pem
+*.key
+*.cer
+*.crt
+*.mobileprovision
+*.provisionprofile
+.env
+.env.*
 
 # Local assistant/tooling state
 .claude/

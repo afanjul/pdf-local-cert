@@ -3,17 +3,19 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>PDF-Signer</string>
+    <string>PDF Local Cert</string>
     <key>CFBundleDisplayName</key>
-    <string>PDF-Signer</string>
+    <string>PDF Local Cert</string>
     <key>CFBundleIdentifier</key>
-    <string>com.palbin.pdfsigner</string>
+    <string>com.palbin.pdflocalcert</string>
     <key>CFBundleVersion</key>
     <string>1</string>
     <key>CFBundleShortVersionString</key>
     <string>0.1.0</string>
     <key>CFBundleExecutable</key>
-    <string>PDF-Signer</string>
+    <string>PDFLocalCert</string>
+    <key>CFBundleIconFile</key>
+    <string>AppIcon</string>
     <key>CFBundlePackageType</key>
     <string>APPL</string>
     <key>LSMinimumSystemVersion</key>

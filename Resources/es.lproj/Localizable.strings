@@ -1,0 +1,155 @@
+/* AppearanceEditorView */
+"appearance" = "Apariencia";
+"content" = "Contenido";
+"image" = "Imagen";
+"style" = "Estilo";
+"name" = "Nombre";
+"label" = "Etiqueta";
+"date" = "Fecha";
+"reason" = "Motivo";
+"location" = "Lugar";
+"image_button" = "Imagen…";
+"remove" = "Quitar";
+"verification_qr" = "Código QR de verificación";
+"border" = "Borde";
+"transparent_background" = "Fondo transparente";
+"wrap_text" = "Ajustar texto (multilínea)";
+"text_size" = "Tamaño texto";
+
+/* ContentView */
+"section" = "Sección";
+"sign" = "Firmar";
+"batch" = "Lote";
+"verify" = "Verificar";
+"new" = "Nuevo";
+"close_pdf_help" = "Cerrar el PDF y volver al inicio";
+"preferences" = "Preferencias";
+"preferences_help" = "Preferencias";
+"drag_pdf_here" = "Arrastra un PDF aquí";
+"certificate" = "Certificado";
+"no_certificates_found" = "No se encontraron certificados en el Llavero.";
+"visible_signature" = "Firma visible";
+"visible_signature_help" = "Además de firmar el documento, te permite hacer tu firma visible.";
+"sign_all_pages" = "Firmar en todas las páginas";
+"timestamp" = "Sello de tiempo (B-T)";
+"timestamp_help" = "Certifica que el documento existía tal como está en este momento exacto.";
+"tsa_url" = "URL TSA";
+"sign_and_save" = "Firmar y guardar";
+"free_signs" = "Gratis · %d/%d firmas";
+"pro" = "Pro";
+"issuer" = "Emisor";
+"validity" = "Validez";
+"expired" = "caducado";
+"no_signing_usage" = "Sin uso de firma";
+"open" = "Abrir…";
+
+/* PreferencesView */
+"appearance" = "Apariencia";
+"theme" = "Tema";
+"system_theme" = "Sistema";
+"light_theme" = "Claro";
+"dark_theme" = "Oscuro";
+"language" = "Idioma";
+"system_language" = "Sistema";
+"spanish" = "Español";
+"english" = "English";
+"language_restart_help" = "El cambio de idioma se aplica al reiniciar la app.";
+"tab_general" = "General";
+"tab_license" = "Licencia";
+"tab_about" = "Acerca de";
+
+/* About tab */
+"developed_by" = "Desarrollado por Alejandro Vanjul";
+"view_on_github" = "Ver en GitHub";
+"open_source_note" = "Código abierto · GPL-3.0. Compílalo tú mismo gratis, o consigue la app firmada para apoyar el desarrollo.";
+
+/* License tab */
+"license_management" = "Gestión de licencia";
+"license_active" = "Licencia activa";
+"license_active_desc" = "Puedes usar PDF Local Cert Pro en todos tus dispositivos personales.";
+"deactivate_license" = "Desactivar licencia";
+"free_plan" = "Plan gratuito";
+"free_signs_status" = "%d de %d firmas gratuitas usadas este mes.";
+"enter_license_key" = "Introduce la clave de licencia";
+
+/* PaywallView */
+"pdf_local_cert_pro" = "PDF Local Cert Pro";
+"feature_custom_placement" = "Coloca la firma donde quieras (caja a medida)";
+"feature_appearance" = "Apariencia configurable + imagen manuscrita";
+"feature_presets" = "Ajustes preestablecidos";
+"feature_unlimited" = "Firmas ilimitadas";
+"free_limit_reached" = "Has alcanzado el límite gratuito de %d firmas este mes.";
+"buy_license" = "Comprar licencia…";
+"already_have_license" = "¿Ya tienes licencia?";
+"activate" = "Activar";
+"invalid_license_key" = "Clave de licencia no válida.";
+"close" = "Cerrar";
+
+/* SignaturePlacementView */
+"previous_page" = "Página anterior";
+"next_page" = "Página siguiente";
+"page_x_of_y" = "Página %d de %d";
+"drag_to_draw_signature" = "Arrastra para dibujar la firma";
+"zoom_out" = "Reducir zoom";
+"zoom_reset" = "Restablecer zoom";
+"zoom_in" = "Aumentar zoom";
+"zoom_percent_accessibility" = "Zoom %d por ciento. Restablecer";
+
+/* Batch */
+"batch_signing" = "Firma por lotes";
+"add" = "Añadir…";
+"clear" = "Limpiar";
+"drag_multiple_pdfs" = "Arrastra varios PDF aquí";
+"batch_summary" = "%d firmados · %d con error · %d total";
+"sign_all" = "Firmar todo";
+
+/* VerifierViewB */
+"add_button" = "Añadir";
+"reverify" = "Reverificar";
+"newest_first" = "Más recientes primero";
+"only_invalid" = "Solo inválidos";
+"verifying_x_of_y" = "Verificando %d/%d…";
+"x_valid" = "%d válidos";
+"x_invalid" = "%d · %d inválido%s";
+"drag_signed_pdfs" = "Arrastra uno o varios PDFs firmados para verificar";
+"no_signatures" = "Sin firmas.";
+
+/* PresetStore */
+"presets" = "Ajustes preestablecidos";
+"none_saved" = "Ninguno guardado";
+"delete" = "Eliminar";
+"save_preset_help" = "Guardar apariencia como ajuste preestablecido";
+"save_appearance_as" = "Guardar apariencia como…";
+"cancel" = "Cancelar";
+"save" = "Guardar";
+
+/* Errors */
+"error_no_document" = "Arrastra un PDF para empezar.";
+"error_no_certificate" = "Selecciona un certificado de firma.";
+"error_cert_expired" = "El certificado ha caducado.";
+"error_key_locked" = "PIN incorrecto o tarjeta bloqueada.";
+"error_sign_failed" = "No se pudo firmar: %@";
+"error_io" = "Error de archivo: %@";
+"error_bad_pdf" = "El PDF no se pudo procesar.";
+"error_pdf_encrypted" = "El PDF está protegido.";
+"error_tsa_timeout" = "No se pudo obtener el sello de tiempo.";
+"error_cms_too_big" = "La firma excede el espacio reservado.";
+"error_internal" = "Error interno de firma.";
+
+/* VerifierView */
+"drag_signed_pdf" = "Arrastra un PDF firmado para verificar";
+"signature_valid" = "Firma válida";
+"signature_invalid" = "Firma no válida";
+"signer" = "Firmante: %@";
+"with_timestamp" = "Con sello de tiempo";
+"without_timestamp" = "Sin sello de tiempo";
+
+/* VerifierViewA */
+"drag_more_pdfs" = "Arrastra más PDFs aquí";
+"x_files" = "%d archivo%s";
+"x_verifying" = "%d verificando";
+"remove_from_list" = "Quitar de la lista";
+"verifying" = "Verificando…";
+"place_signature_hint_title" = "Sitúa tu firma";
+"place_signature_hint_body" = "Dibuja un recuadro sobre el documento, donde quieras que aparezca tu firma. Después podrás moverlo y redimensionarlo.";
+"drag_preview_to_place" = "Arrastra esta vista previa sobre el documento para situar la firma";

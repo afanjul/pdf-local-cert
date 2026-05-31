@@ -1,9 +1,9 @@
-# PDF-Signer — Implementation Specifications
+# PDF Local Cert — Implementation Specifications
 
 > Native macOS app for signing PDFs with X.509 certificates from the system Keychain (FNMT, DNIe, qualified eIDAS). Output: eIDAS-valid PAdES B-T with RFC 3161 timestamp. Private keys never leave the Keychain.
 >
 > **Status:** Engineering spec · **Version:** 1.0 · **Date:** 2026-05-28
-> **Renamed from:** FirmaFast → **PDF-Signer**
+> **Renamed from:** FirmaFast → **PDF Local Cert**
 
 ---
 
@@ -11,11 +11,11 @@
 
 | Item | Value |
 |------|-------|
-| Product name | PDF-Signer |
-| Bundle identifier | `com.palbin.pdfsigner` |
-| Display name | PDF-Signer |
-| Sidecar binary | `pdfsigner-core` |
-| Verifier domain | `verify.pdfsigner.app` (placeholder) |
+| Product name | PDF Local Cert |
+| Bundle identifier | `com.palbin.pdflocalcert` |
+| Display name | PDF Local Cert |
+| Sidecar binary | `pdflocalcert-core` |
+| Verifier domain | `verify.pdflocalcert.app` (placeholder) |
 | Min macOS | 14.0 (Sonoma) — PDFKit + Security.framework maturity |
 | Language | Swift 6 (strict concurrency), Rust (sidecar) |
 
@@ -29,11 +29,11 @@ Rename checklist (from FirmaFast): bundle ID, `Info.plist` `CFBundleName`/`CFBun
 
 ```
 ┌─────────────────────────────────────────────────────────┐
-│  PDF-Signer.app (notarized, hardened runtime)            │
+│  PDF Local Cert.app (notarized, hardened runtime)            │
 │                                                          │
 │  ┌────────────────────────┐   ┌──────────────────────┐  │
 │  │  Native shell (Swift)  │   │  Signing core (Rust) │  │
-│  │                        │   │  pdfsigner-core      │  │
+│  │                        │   │  pdflocalcert-core      │  │
 │  │  • SwiftUI views       │   │  (bundled CLI)       │  │
 │  │  • PDFKit render/draw  │◄─►│                      │  │
 │  │  • Keychain enum       │   │  • PDF byte-range     │  │
@@ -42,17 +42,17 @@ Rename checklist (from FirmaFast): bundle ID, `Info.plist` `CFBundleName`/`CFBun
 │  │  • Coordinate mapping  │   │  • Appearance render  │  │
 │  │  • License/billing     │   │  • Verifier engine    │  │
 │  └────────────────────────┘   └──────────────────────┘  │
-│         Contents/MacOS/PDF-Signer                        │
-│         Contents/Helpers/pdfsigner-core                  │
+│         Contents/MacOS/PDF Local Cert                        │
+│         Contents/Helpers/pdflocalcert-core                  │
 └─────────────────────────────────────────────────────────┘
                           │ (verifier funnel only)
                           ▼
         ┌──────────────────────────────────┐
-        │  verify.pdfsigner.app (static +   │
+        │  verify.pdflocalcert.app (static +   │
         │  serverless verify fn)            │
         └──────────────────────────────────┘
         ┌──────────────────────────────────┐
-        │  license.pdfsigner.app (Stripe +  │
+        │  license.pdflocalcert.app (Stripe +  │
         │  light license server)            │
         └──────────────────────────────────┘
 ```
@@ -135,9 +135,9 @@ Filter identities by Key Usage `digitalSignature` or `nonRepudiation` (parse cer
 ## 3. Module Breakdown (Swift shell)
 
 ```
-PDFSigner/
+PDFLocalCert/
 ├── App/
-│   ├── PDFSignerApp.swift           # @main, scene, window
+│   ├── PDFLocalCertApp.swift           # @main, scene, window
 │   └── AppState.swift               # @Observable root state
 ├── PDF/
 │   ├── PDFViewerView.swift          # PDFKit NSViewRepresentable
@@ -184,7 +184,7 @@ PDFSigner/
 ### 4.1 Crate layout
 
 ```
-pdfsigner-core/
+pdflocalcert-core/
 ├── src/
 │   ├── main.rs              # JSON line protocol over stdin/stdout
 │   ├── protocol.rs          # serde request/response types
@@ -249,7 +249,7 @@ Used by both the in-app verifier and the serverless web endpoint (compiled to a 
 ### Phase 4 — Scale signing (4–6 wk)
 - [ ] Multiple signature boxes per document (sequential signing where required).
 - [ ] Batch: drop folder / multi-select → sign all (invisible or default placement) with progress + per-file result.
-- [ ] QR verify-badge embedded in appearance, links to `verify.pdfsigner.app/v/{token}`.
+- [ ] QR verify-badge embedded in appearance, links to `verify.pdflocalcert.app/v/{token}`.
 - [ ] Team/multi-seat licensing.
 
 ### Phase 5+ — Platform

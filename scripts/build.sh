@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build PDF-Signer.app: Rust sidecar + SwiftUI shell, assembled and code-signed.
+# Build PDF Local Cert.app: Rust sidecar + SwiftUI shell, assembled and code-signed.
 #
 # Usage:
 #   scripts/build.sh                 # ad-hoc signed (local run)
@@ -10,7 +10,8 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
-APP_NAME="PDF-Signer"
+APP_NAME="PDF Local Cert"
+EXEC_NAME="PDFLocalCert"
 BUNDLE="build/${APP_NAME}.app"
 SIGN_ID="${SIGN_ID:--}"            # default: ad-hoc
 CARGO="${CARGO:-/opt/homebrew/bin/cargo}"
@@ -25,17 +26,24 @@ echo "▸ Assembling ${BUNDLE}…"
 rm -rf "$BUNDLE"
 mkdir -p "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Helpers" "$BUNDLE/Contents/Resources"
 
-cp ".build/release/PDFSigner"            "$BUNDLE/Contents/MacOS/${APP_NAME}"
-cp "core/target/release/pdfsigner-core"  "$BUNDLE/Contents/Helpers/pdfsigner-core"
+cp ".build/release/PDFLocalCert"            "$BUNDLE/Contents/MacOS/${EXEC_NAME}"
+cp "core/target/release/pdflocalcert-core"  "$BUNDLE/Contents/Helpers/pdflocalcert-core"
 cp "Resources/Info.plist"                "$BUNDLE/Contents/Info.plist"
+cp "Resources/AppIcon.icns"              "$BUNDLE/Contents/Resources/AppIcon.icns"
+cp "Resources/drop-icon-base.png"        "$BUNDLE/Contents/Resources/drop-icon-base.png"
+cp "Resources/drop-icon-pen.png"         "$BUNDLE/Contents/Resources/drop-icon-pen.png"
+# Localized strings (NSLocalizedString reads these from the bundle's .lproj dirs).
+for lproj in Resources/*.lproj; do
+    cp -R "$lproj" "$BUNDLE/Contents/Resources/"
+done
 
 echo "▸ Code signing (id: ${SIGN_ID})…"
-ENT="Resources/PDFSigner.entitlements"
+ENT="Resources/PDFLocalCert.entitlements"
 codesign --force --options runtime --timestamp=none \
-    --sign "$SIGN_ID" "$BUNDLE/Contents/Helpers/pdfsigner-core"
+    --sign "$SIGN_ID" "$BUNDLE/Contents/Helpers/pdflocalcert-core"
 codesign --force --options runtime --timestamp=none \
     --entitlements "$ENT" \
-    --sign "$SIGN_ID" "$BUNDLE/Contents/MacOS/${APP_NAME}"
+    --sign "$SIGN_ID" "$BUNDLE/Contents/MacOS/${EXEC_NAME}"
 codesign --force --options runtime --timestamp=none \
     --entitlements "$ENT" \
     --sign "$SIGN_ID" "$BUNDLE"

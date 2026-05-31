@@ -1,4 +1,4 @@
-# PDF-Signer — Per-Phase Task Checklist
+# PDF Local Cert — Per-Phase Task Checklist
 
 > Buildable task breakdown derived from `IMPLEMENTATION_SPEC.md`. Each task: owner-sized, testable. Story-point refs (`S#`) map to PRD §5.2.
 >
@@ -30,9 +30,9 @@ Deviations from the original plan (intentional, for solo speed):
 **Exit gate 🔴:** valid PAdES B-T PDF produced via callback signer; `.app` notarizes; Rust-vs-pyHanko decision recorded.
 
 ### 0.1 Project skeleton
-- [x] SwiftPM executable `PDFSigner`, macOS 14, Swift 6 strict concurrency. *(not an .xcodeproj)*
-- [x] Bundle ID `com.palbin.pdfsigner`; display name set. Icon: placeholder/none yet.
-- [x] Init Rust crate `pdfsigner-core`.
+- [x] SwiftPM executable `PDFLocalCert`, macOS 14, Swift 6 strict concurrency. *(not an .xcodeproj)*
+- [x] Bundle ID `com.palbin.pdflocalcert`; display name set. Icon: placeholder/none yet.
+- [x] Init Rust crate `pdflocalcert-core`.
 - [ ] universal2 build (`aarch64` + `x86_64` → `lipo`) — **arm64 only so far**.
 - [x] Wire core into `.app/Contents/Helpers/` (via `scripts/build.sh`, not an Xcode phase).
 - [ ] Git repo, `.gitignore`, CI stub — **not done**.
@@ -101,7 +101,7 @@ Deviations from the original plan (intentional, for solo speed):
 - [ ] In-repo automated test/CI, sign-success metrics, crash reporting — **not done**.
 - [ ] TestFlight/beta — **not done**.
 
-**Hard-won Adobe PAdES fixes applied this build (see memory `pdf-signer-build`):**
+**Hard-won Adobe PAdES fixes applied this build (see memory `pdf-local-cert-build`):**
 - [x] `/ByteRange` integers without leading zeros (space-padded region).
 - [x] `/ByteRange` gap excludes BOTH `<` `>` of `/Contents` (the `/Contents illegal data` cause).
 - [x] `/M` signing time + `/Name` in Sig dict.
@@ -114,10 +114,10 @@ Deviations from the original plan (intentional, for solo speed):
 **Exit gate:** signature lands within ±2pt of drawn rect; mapper tests pass.
 
 ### 2.1 Coordinate mapper ⚠ (S12, 8pt) — DONE
-- [x] `CoordinateMapper`: view ↔ normalized displayed ↔ PDF user space. Pure-logic lib `Sources/PDFSignerKit/`.
+- [x] `CoordinateMapper`: view ↔ normalized displayed ↔ PDF user space. Pure-logic lib `Sources/PDFLocalCertKit/`.
 - [x] Handle `/Rotate` 0/90/180/270 + cropBox origin.
 - [x] Normalize rect to 0–1 displayed-page fraction; map to user-space `/Rect`.
-- [x] **Unit tests:** `Tests/PDFSignerKitTests/` — rotation × zoom (25%–400%) grid, round-trip, corner-landing, cropBox offset. 10/10 pass. 🔴 ✓
+- [x] **Unit tests:** `Tests/PDFLocalCertKitTests/` — rotation × zoom (25%–400%) grid, round-trip, corner-landing, cropBox offset. 10/10 pass. 🔴 ✓
 
 ### 2.2 Draw rectangle (S10, 8pt) — DONE
 - [x] `SignatureBoxOverlay`: draw / move / 4-corner resize over rendered page.
@@ -167,7 +167,7 @@ Deviations from the original plan (intentional, for solo speed):
 - [x] Partial-failure handling (per-item failed state); outputs `<name>-firmado.pdf` beside source. Pro-gated.
 
 ### 4.3 QR badge (S17, 5pt) — DONE (local embed)
-- [~] Verifier serverless endpoint + token mint: **stubbed** (token = per-sign UUID; URL `verify.pdfsigner.app/v/{token}`; no cloud write).
+- [~] Verifier serverless endpoint + token mint: **stubbed** (token = per-sign UUID; URL `verify.pdflocalcert.app/v/{token}`; no cloud write).
 - [x] Embed QR in appearance (CoreImage `CIQRCodeGenerator`, composited by `AppearanceRenderer`).
 - [ ] Cloud record `{sig_hash, signing_time, token}` — **deferred** (needs backend). 🔒
 

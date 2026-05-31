@@ -1,4 +1,4 @@
-//! pdfsigner-core — signing sidecar for PDF-Signer.
+//! pdflocalcert-core — signing sidecar for PDF Local Cert.
 //!
 //! Speaks a line-delimited JSON protocol on stdin/stdout. One request per line,
 //! one response per line. The private key never reaches this process: `prepare`

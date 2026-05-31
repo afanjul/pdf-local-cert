@@ -1,4 +1,4 @@
-# PDF-Signer
+# PDF Local Cert
 
 Native macOS app to digitally sign PDFs with the X.509 certificates already in
 your Keychain (FNMT, DNIe, qualified eIDAS) — no Java, no Adobe, no AutoFirma.
@@ -11,7 +11,7 @@ Keychain.
 
 | Part | Path | Role |
 |------|------|------|
-| SwiftUI shell | `Sources/PDFSigner/` | UI, PDFKit render, Keychain enum, `SecKeyCreateSignature`, save, verifier |
+| SwiftUI shell | `Sources/PDFLocalCert/` | UI, PDFKit render, Keychain enum, `SecKeyCreateSignature`, save, verifier |
 | Rust sidecar | `core/` | PDF byte-range surgery, CMS/PAdES assembly, RFC 3161 TSA, verification |
 
 The shell never exports the key: the core returns the SignedAttributes to sign,
@@ -21,7 +21,7 @@ the shell signs them via the Keychain, the core splices the CMS into the PDF
 ## Build
 
 ```sh
-bash scripts/build.sh          # ad-hoc signed → build/PDF-Signer.app
+bash scripts/build.sh          # ad-hoc signed → build/PDF Local Cert.app
 SIGN_ID="Apple Development: Your Name (TEAMID)" bash scripts/build.sh
 ```
 
@@ -32,7 +32,7 @@ SIGN_ID="Apple Development: Your Name (TEAMID)" bash scripts/build.sh
 ## Run
 
 ```sh
-open build/PDF-Signer.app
+open build/PDF Local Cert.app
 ```
 
 Drag a PDF in, pick a certificate, choose invisible or visible signature,

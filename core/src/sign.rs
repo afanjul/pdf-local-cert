@@ -308,7 +308,7 @@ pub fn finalize(req: FinalizeReq) -> Result<FinalizeResp, CoreErr> {
         Some(url) if !url.is_empty() => match tsa::fetch_token(url, &signature) {
             Ok(token) => (Some(token), "B-T"),
             Err(e) => {
-                eprintln!("[pdfsigner-core] TSA failed, falling back to B-B: {e}");
+                eprintln!("[pdflocalcert-core] TSA failed, falling back to B-B: {e}");
                 (None, "B-B")
             }
         },
@@ -345,9 +345,9 @@ fn load_state(handle: &str) -> Result<State, CoreErr> {
     // the same work_dir, so the state file sits next to working pdf. We stored
     // absolute paths inside; we recover by reading from the handle-derived name
     // in the OS temp dir tree the shell uses. The shell always finalizes with the
-    // working dir set, so we look relative to env PDFSIGNER_WORK if present.
+    // working dir set, so we look relative to env PDFLOCALCERT_WORK if present.
     let dirs = [
-        std::env::var("PDFSIGNER_WORK").ok(),
+        std::env::var("PDFLOCALCERT_WORK").ok(),
         Some(std::env::temp_dir().to_string_lossy().into()),
     ];
     for d in dirs.into_iter().flatten() {
@@ -552,21 +552,21 @@ fn build_appearance(
         new_objects.push((image_id, 0, object_block(image_id, 0, &image)));
 
         // n0: blank background layer (matches both references' "% DSBlank").
-        let n0 = layer_form(100.0, 100.0, &[], false, false, "% DSBlank\n");
+        let n0 = layer_form(100.0, 100.0, &[], false, "% DSBlank\n");
         new_objects.push((n0_id, 0, object_block(n0_id, 0, &n0)));
 
         // n2: content layer — draws the image scaled to the box.
         let n2_content = format!("q {w:.3} 0 0 {h:.3} 0 0 cm /Im0 Do Q", w = p.w, h = p.h);
-        let n2 = layer_form(p.w, p.h, &[("Im0", image_id)], false, false, &n2_content);
+        let n2 = layer_form(p.w, p.h, &[("Im0", image_id)], false, &n2_content);
         new_objects.push((n2_id, 0, object_block(n2_id, 0, &n2)));
 
         // FRM: composes n0 over n2.
         let frm_content = "q 1 0 0 1 0 0 cm /n0 Do Q\nq 1 0 0 1 0 0 cm /n2 Do Q";
-        let frm = layer_form(p.w, p.h, &[("n0", n0_id), ("n2", n2_id)], false, false, frm_content);
+        let frm = layer_form(p.w, p.h, &[("n0", n0_id), ("n2", n2_id)], false, frm_content);
         new_objects.push((frm_id, 0, object_block(frm_id, 0, &frm)));
 
         // N: top appearance referenced by the widget's /AP /N — draws FRM.
-        let n_form = layer_form(p.w, p.h, &[("FRM", frm_id)], false, false, "q 1 0 0 1 0 0 cm /FRM Do Q");
+        let n_form = layer_form(p.w, p.h, &[("FRM", frm_id)], false, "q 1 0 0 1 0 0 cm /FRM Do Q");
         new_objects.push((ap_id, 0, object_block(ap_id, 0, &n_form)));
 
         Ok(format!(" /AP << /N {ap_id} 0 R >>"))
@@ -590,24 +590,12 @@ fn build_appearance(
                     "placed image size mismatch: {} != {expected}", rgba.len())));
             }
             let img_id = *next_id; *next_id += 1;
-            if p.pro_appearance {
-                // Pro/Standards: keep transparency — RGB image + grayscale
-                // /SMask. Composited correctly by the transparency group on n2.
-                let (rgb, alpha) = split_rgba(&rgba);
-                let rgb_z = deflate(&rgb);
-                let alpha_z = deflate(&alpha);
-                let smask_id = *next_id; *next_id += 1;
-                let smask = image_stream(pim.width, pim.height, "DeviceGray", None, &alpha_z);
-                new_objects.push((smask_id, 0, object_block(smask_id, 0, &smask)));
-                let image = image_stream(pim.width, pim.height, "DeviceRGB", Some(smask_id), &rgb_z);
-                new_objects.push((img_id, 0, object_block(img_id, 0, &image)));
-            } else {
-                // Compatible: flatten over white, fully opaque, no /SMask.
-                let rgb = composite_over_white(&rgba);
-                let rgb_z = deflate(&rgb);
-                let image = image_stream(pim.width, pim.height, "DeviceRGB", None, &rgb_z);
-                new_objects.push((img_id, 0, object_block(img_id, 0, &image)));
-            }
+            // Flatten over white, fully opaque, no /SMask — the structure
+            // Acrobat accepts (and the smaller of the two we tested).
+            let rgb = composite_over_white(&rgba);
+            let rgb_z = deflate(&rgb);
+            let image = image_stream(pim.width, pim.height, "DeviceRGB", None, &rgb_z);
+            new_objects.push((img_id, 0, object_block(img_id, 0, &image)));
             let name = format!("Im{i}");
             draw_ops.push_str(&format!(
                 "q {w:.3} 0 0 {h:.3} {x:.3} {y:.3} cm /{name} Do Q\n",
@@ -622,7 +610,7 @@ fn build_appearance(
         let ap_id = *next_id; *next_id += 1;
 
         // n0: blank background layer.
-        let n0 = layer_form(100.0, 100.0, &[], false, false, "% DSBlank\n");
+        let n0 = layer_form(100.0, 100.0, &[], false, "% DSBlank\n");
         new_objects.push((n0_id, 0, object_block(n0_id, 0, &n0)));
 
         // n2: background fill (behind), opaque images, then vector text, then
@@ -650,16 +638,16 @@ fn build_appearance(
         }
         let img_ref_slice: Vec<(&str, u32)> =
             img_refs.iter().map(|(n, id)| (n.as_str(), *id)).collect();
-        let n2 = layer_form(p.w, p.h, &img_ref_slice, true, p.pro_appearance, &n2_content);
+        let n2 = layer_form(p.w, p.h, &img_ref_slice, true, &n2_content);
         new_objects.push((n2_id, 0, object_block(n2_id, 0, &n2)));
 
         // FRM: composes n0 over n2.
         let frm_content = "q 1 0 0 1 0 0 cm /n0 Do Q\nq 1 0 0 1 0 0 cm /n2 Do Q";
-        let frm = layer_form(p.w, p.h, &[("n0", n0_id), ("n2", n2_id)], false, false, frm_content);
+        let frm = layer_form(p.w, p.h, &[("n0", n0_id), ("n2", n2_id)], false, frm_content);
         new_objects.push((frm_id, 0, object_block(frm_id, 0, &frm)));
 
         // N: top appearance referenced by the widget's /AP /N.
-        let n_form = layer_form(p.w, p.h, &[("FRM", frm_id)], false, false, "q 1 0 0 1 0 0 cm /FRM Do Q");
+        let n_form = layer_form(p.w, p.h, &[("FRM", frm_id)], false, "q 1 0 0 1 0 0 cm /FRM Do Q");
         new_objects.push((ap_id, 0, object_block(ap_id, 0, &n_form)));
 
         Ok(format!(" /AP << /N {ap_id} 0 R >>"))
@@ -760,19 +748,6 @@ fn composite_over_white(rgba: &[u8]) -> Vec<u8> {
     rgb
 }
 
-/// Split interleaved straight-alpha RGBA8 into (RGB, alpha) planes, for the
-/// Pro/Standards path that embeds a real /SMask (preserving transparency).
-fn split_rgba(rgba: &[u8]) -> (Vec<u8>, Vec<u8>) {
-    let px = rgba.len() / 4;
-    let mut rgb = Vec::with_capacity(px * 3);
-    let mut alpha = Vec::with_capacity(px);
-    for chunk in rgba.chunks_exact(4) {
-        rgb.extend_from_slice(&chunk[0..3]);
-        alpha.push(chunk[3]);
-    }
-    (rgb, alpha)
-}
-
 /// zlib-compress (PDF /FlateDecode).
 fn deflate(data: &[u8]) -> Vec<u8> {
     use flate2::write::ZlibEncoder;
@@ -811,7 +786,7 @@ fn image_stream(w: u32, h: u32, cs: &str, smask: Option<u32>, data: &[u8]) -> Ve
 /// form that omits them can make that rebuild fail. Both Acrobat's and
 /// AutoFirma's Acrobat-accepted image signatures use exactly this layered
 /// structure, so we match it byte-for-byte.
-fn layer_form(w: f64, h: f64, xobjects: &[(&str, u32)], with_font: bool, group: bool, content: &str) -> Vec<u8> {
+fn layer_form(w: f64, h: f64, xobjects: &[(&str, u32)], with_font: bool, content: &str) -> Vec<u8> {
     let xobj_clause = if xobjects.is_empty() {
         String::new()
     } else {
@@ -826,16 +801,9 @@ fn layer_form(w: f64, h: f64, xobjects: &[(&str, u32)], with_font: bool, group: 
     } else {
         ""
     };
-    // Pro/Standards: isolated, non-knockout transparency group so an /SMask on
-    // a placed image composites correctly (PDF 32000 §11.6.4.3).
-    let group_clause = if group {
-        "/Group << /Type /Group /S /Transparency /CS /DeviceRGB /I true /K false >> "
-    } else {
-        ""
-    };
     let header = format!(
         "<< /Type /XObject /Subtype /Form /FormType 1 /BBox [0 0 {w} {h}] \
-/Matrix [1 0 0 1 0 0] {group_clause}\
+/Matrix [1 0 0 1 0 0] \
 /Resources << /ProcSet [/PDF /Text /ImageB /ImageC /ImageI] {xobj_clause}{font_clause}>> \
 /Length {} >>\nstream\n",
         content.len()
