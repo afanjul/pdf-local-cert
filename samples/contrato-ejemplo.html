@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<style>
+  @page { size: A4; margin: 22mm 20mm; }
+  * { box-sizing: border-box; }
+  body {
+    font-family: "Georgia", "Times New Roman", serif;
+    color: #1a1a1a;
+    font-size: 11pt;
+    line-height: 1.55;
+    margin: 0;
+  }
+  .doc-head {
+    display: flex; justify-content: space-between; align-items: flex-start;
+    border-bottom: 2px solid #2c3e50; padding-bottom: 10px; margin-bottom: 26px;
+  }
+  .brand { font-family: "Helvetica Neue", Arial, sans-serif; }
+  .brand .name { font-size: 15pt; font-weight: 700; color: #2c3e50; letter-spacing: .5px; }
+  .brand .tag  { font-size: 8.5pt; color: #7f8c8d; text-transform: uppercase; letter-spacing: 1.5px; }
+  .meta { text-align: right; font-family: "Helvetica Neue", Arial, sans-serif; font-size: 8.5pt; color: #555; }
+  .meta b { color: #2c3e50; }
+  h1 {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 16pt; text-align: center; color: #2c3e50;
+    margin: 0 0 4px; letter-spacing: .3px;
+  }
+  .subtitle { text-align: center; font-size: 9pt; color: #7f8c8d; margin-bottom: 26px;
+    font-family: "Helvetica Neue", Arial, sans-serif; text-transform: uppercase; letter-spacing: 2px; }
+  .reunidos { margin-bottom: 18px; }
+  .reunidos p { margin: 0 0 10px; text-align: justify; }
+  h2 {
+    font-family: "Helvetica Neue", Arial, sans-serif;
+    font-size: 10.5pt; color: #2c3e50; text-transform: uppercase; letter-spacing: 1px;
+    border-left: 3px solid #2980b9; padding-left: 8px; margin: 22px 0 6px;
+  }
+  .clausula { text-align: justify; margin: 0 0 12px; }
+  .clausula b { color: #2c3e50; }
+  ul { margin: 4px 0 12px; padding-left: 20px; }
+  li { margin-bottom: 4px; text-align: justify; }
+  .firmas {
+    display: flex; justify-content: space-between; margin-top: 26px; gap: 40px;
+  }
+  .firma { flex: 1; text-align: center; }
+  .firma .line { border-top: 1px solid #333; margin-top: 40px; padding-top: 6px;
+    font-family: "Helvetica Neue", Arial, sans-serif; font-size: 9pt; }
+  .firma .role { color: #7f8c8d; font-size: 8pt; }
+  .place { margin-top: 20px; font-size: 10pt; }
+  .footer {
+    position: fixed; bottom: 8mm; left: 0; right: 0; text-align: center;
+    font-family: "Helvetica Neue", Arial, sans-serif; font-size: 7.5pt; color: #aaa;
+    border-top: .5px solid #ddd; padding-top: 4px;
+  }
+</style>
+</head>
+<body>
+  <div class="doc-head">
+    <div class="brand">
+      <div class="name">NORTIA CONSULTING, S.L.</div>
+      <div class="tag">Servicios de Ingeniería de Software</div>
+    </div>
+    <div class="meta">
+      <div><b>Ref. contrato:</b> NRT-2026-0184</div>
+      <div><b>Expediente:</b> SVC/2026/0184</div>
+      <div><b>Fecha:</b> 31 de mayo de 2026</div>
+    </div>
+  </div>
+
+  <h1>Contrato de Prestación de Servicios</h1>
+  <div class="subtitle">Desarrollo y mantenimiento de software a medida</div>
+
+  <div class="reunidos">
+    <h2>Reunidos</h2>
+    <p>De una parte, <b>NORTIA CONSULTING, S.L.</b>, con domicilio social en Calle de Velázquez 142, 28006 Madrid, y C.I.F. B-87654321, representada en este acto por D.ª <b>Marta Salgado Ferreras</b>, mayor de edad, con DNI 51.234.876-Q, en calidad de Administradora Única (en adelante, el «Prestador»).</p>
+    <p>De otra parte, <b>VELORA RETAIL GROUP, S.A.</b>, con domicilio en Avenida Diagonal 511, 08029 Barcelona, y C.I.F. A-12398765, representada por D. <b>Ignacio Beltrán Cossío</b>, con DNI 38.998.221-K, en calidad de Director de Operaciones (en adelante, el «Cliente»).</p>
+    <p>Ambas partes se reconocen mutuamente capacidad jurídica suficiente para contratar y obligarse, y a tal efecto</p>
+  </div>
+
+  <h2>Cláusulas</h2>
+
+  <p class="clausula"><b>Primera. — Objeto.</b> El Prestador se obliga a diseñar, desarrollar e implantar una plataforma de gestión de inventario para el Cliente, conforme a las especificaciones técnicas recogidas en el Anexo I, que forma parte inseparable de este contrato.</p>
+
+  <p class="clausula"><b>Segunda. — Duración.</b> El presente contrato tendrá una duración de doce (12) meses desde su firma, prorrogable por períodos anuales sucesivos salvo denuncia expresa con una antelación mínima de treinta (30) días.</p>
+
+  <p class="clausula"><b>Tercera. — Precio y forma de pago.</b> El importe total de los servicios asciende a <b>48.000 €</b> (cuarenta y ocho mil euros), I.V.A. no incluido, pagadero en tres hitos: 30 % a la firma, 40 % a la entrega intermedia y 30 % a la aceptación definitiva.</p>
+
+  <p class="clausula"><b>Cuarta. — Confidencialidad y protección de datos.</b> Las partes guardarán estricta confidencialidad sobre la información a la que accedan, obligación que subsistirá tres (3) años tras la finalización del contrato. El tratamiento de datos personales se ajustará al Reglamento (UE) 2016/679 (RGPD).</p>
+
+  <p class="place">Y en prueba de conformidad, ambas partes firman el presente contrato por duplicado y a un solo efecto, en Madrid, a 31 de mayo de 2026.</p>
+
+  <div class="firmas">
+    <div class="firma">
+      <div class="line">Marta Salgado Ferreras</div>
+      <div class="role">Por el Prestador — NORTIA CONSULTING, S.L.</div>
+    </div>
+    <div class="firma">
+      <div class="line">Ignacio Beltrán Cossío</div>
+      <div class="role">Por el Cliente — VELORA RETAIL GROUP, S.A.</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    NORTIA CONSULTING, S.L. · C.I.F. B-87654321 · Calle de Velázquez 142, 28006 Madrid · Documento de ejemplo sin validez legal
+  </div>
+</body>
+</html>
