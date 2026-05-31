@@ -55,15 +55,19 @@
 </tr>
 <tr>
 <td width="50%">
-  <a href="https://github.com/afanjul/pdf-local-cert/raw/main/Resources/demo-video-signing-1080p.mp4"><img src="Resources/demo-poster-signing.png" width="100%" alt="Single-sign demo — click to play" /></a>
+
+https://github.com/user-attachments/assets/4a0bb071-1447-4f06-846d-9b2889d0c234
+
 </td>
 <td width="50%">
-  <a href="https://github.com/afanjul/pdf-local-cert/raw/main/Resources/demo-video-batch-signing-1080p.mp4"><img src="Resources/demo-poster-batch.png" width="100%" alt="Batch-sign demo — click to play" /></a>
+
+https://github.com/user-attachments/assets/f9d4f247-d69a-44f3-ab1e-9947754edaf4
+
 </td>
 </tr>
 <tr>
-<td align="center"><sub>▶︎ Pick a Keychain cert, place the signature, sign &amp; save.</sub></td>
-<td align="center"><sub>▶︎ Drop many PDFs, sign them all in one pass.</sub></td>
+<td align="center"><sub>Pick a Keychain cert, place the signature, sign &amp; save.</sub></td>
+<td align="center"><sub>Drop many PDFs, sign them all in one pass.</sub></td>
 </tr>
 </table>
 
