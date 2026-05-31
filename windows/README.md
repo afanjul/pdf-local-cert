@@ -11,6 +11,41 @@ shell only signs the core-provided digest via CNG (external-signer pattern).
 
 See `openspec/changes/windows-port/` for the full design. Scaffolded in Phase 4.
 
+## Build & run (dev)
+
+The app is three projects under `windows/`:
+
+| Project | What |
+|---|---|
+| `PdfLocalCert.Core` | UI-free shared logic (CoreClient, CoordinateMapper, signing services). net8.0, unit-tested on any host. |
+| `PdfLocalCert.App` | WinUI 3 desktop shell. |
+| `spike` | Throwaway Phase 3 CLI over the shared services (headless integration test). |
+
+```powershell
+# Unit tests (any host):
+dotnet test windows\PdfLocalCert.Core.Tests
+
+# Run the app (dev): publish self-contained, drop the core beside it, launch.
+dotnet publish windows\PdfLocalCert.App -c Release -r win-x64 --self-contained true -o C:\plc-app
+copy core\target\x86_64-pc-windows-msvc\release\pdflocalcert-core.exe C:\plc-app\
+# then double-click C:\plc-app\PdfLocalCert.App.exe (launch from the desktop, not SSH)
+```
+
+### Runtime prerequisite (one-time, until the MSIX in Phase 5)
+
+The app bundles the **.NET** runtime (self-contained) — no .NET install needed.
+It is **framework-dependent on the Windows App SDK**, so the machine needs the
+WinAppSDK 1.7 runtime + its **x64 DDLM** provisioned once:
+
+```powershell
+# official redist — installs the framework AND the x64 DDLM the unpackaged app needs
+windowsappruntimeinstall-x64.exe   # from https://aka.ms/windowsappsdk/1.7/latest/
+```
+
+Without the DDLM the app shows "Required components of the Windows App Runtime are
+missing" or exits at startup (0xc000027b in combase.dll). The Phase 5 MSIX package
+declares this dependency so end users never run the redist manually.
+
 ## Phase 3 crypto spike — findings (validated on Win11 VM)
 
 The throwaway spike under [`spike/`](spike) drove a real `prepare → CNG sign →
