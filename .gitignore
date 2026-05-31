@@ -15,6 +15,9 @@ build/
 DerivedData/
 .local-build/
 
+# Large 4K demo masters — only the 1080p versions are published in the README
+Resources/*-4K.mp4
+
 # Secrets / signing material
 *.p12
 *.pfx

@@ -43,6 +43,37 @@
 ---
 
 <!-- ╔══════════════════════════════════════════════════════════════════╗ -->
+<!-- ║                          D E M O S                                ║ -->
+<!-- ╚══════════════════════════════════════════════════════════════════╝ -->
+
+## 🎬 See it in action
+
+<table>
+<tr>
+<td align="center" width="50%"><b>✍️&nbsp; Sign a single PDF</b></td>
+<td align="center" width="50%"><b>⚡&nbsp; Batch signing</b></td>
+</tr>
+<tr>
+<td width="50%">
+
+https://github.com/afanjul/pdf-local-cert/raw/main/Resources/demo-video-signing-1080p.mp4
+
+</td>
+<td width="50%">
+
+https://github.com/afanjul/pdf-local-cert/raw/main/Resources/demo-video-batch-signing-1080p.mp4
+
+</td>
+</tr>
+<tr>
+<td align="center"><sub>Pick a Keychain cert, place the signature, sign &amp; save.</sub></td>
+<td align="center"><sub>Drop many PDFs, sign them all in one pass.</sub></td>
+</tr>
+</table>
+
+---
+
+<!-- ╔══════════════════════════════════════════════════════════════════╗ -->
 <!-- ║                    W H Y   /   COMPARISON                          ║ -->
 <!-- ╚══════════════════════════════════════════════════════════════════╝ -->
 
