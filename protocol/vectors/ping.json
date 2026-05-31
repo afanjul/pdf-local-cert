@@ -1,0 +1,5 @@
+{
+  "name": "ping",
+  "request": { "op": "ping" },
+  "expect_equals": { "status": "ok", "pong": true }
+}
