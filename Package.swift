@@ -16,5 +16,10 @@ let package = Package(
             dependencies: ["PDFLocalCertKit"],
             path: "Sources/PDFLocalCert"
         ),
+        .testTarget(
+            name: "PDFLocalCertKitTests",
+            dependencies: ["PDFLocalCertKit"],
+            path: "Tests/PDFLocalCertKitTests"
+        ),
     ]
 )
