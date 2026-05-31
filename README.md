@@ -55,19 +55,17 @@
 </tr>
 <tr>
 <td width="50%">
-  <video src="https://raw.githubusercontent.com/afanjul/pdf-local-cert/main/Resources/demo-video-signing-1080p.mp4" poster="https://raw.githubusercontent.com/afanjul/pdf-local-cert/main/Resources/demo-poster-signing.png" controls muted width="100%"></video>
+  <a href="https://github.com/afanjul/pdf-local-cert/raw/main/Resources/demo-video-signing-1080p.mp4"><img src="Resources/demo-poster-signing.png" width="100%" alt="Single-sign demo — click to play" /></a>
 </td>
 <td width="50%">
-  <video src="https://raw.githubusercontent.com/afanjul/pdf-local-cert/main/Resources/demo-video-batch-signing-1080p.mp4" poster="https://raw.githubusercontent.com/afanjul/pdf-local-cert/main/Resources/demo-poster-batch.png" controls muted width="100%"></video>
+  <a href="https://github.com/afanjul/pdf-local-cert/raw/main/Resources/demo-video-batch-signing-1080p.mp4"><img src="Resources/demo-poster-batch.png" width="100%" alt="Batch-sign demo — click to play" /></a>
 </td>
 </tr>
 <tr>
-<td align="center"><sub>Pick a Keychain cert, place the signature, sign &amp; save.</sub></td>
-<td align="center"><sub>Drop many PDFs, sign them all in one pass.</sub></td>
+<td align="center"><sub>▶︎ Pick a Keychain cert, place the signature, sign &amp; save.</sub></td>
+<td align="center"><sub>▶︎ Drop many PDFs, sign them all in one pass.</sub></td>
 </tr>
 </table>
-
-<sub>▶︎ Videos not playing inline? <a href="https://github.com/afanjul/pdf-local-cert/raw/main/Resources/demo-video-signing-1080p.mp4">single-sign demo</a> · <a href="https://github.com/afanjul/pdf-local-cert/raw/main/Resources/demo-video-batch-signing-1080p.mp4">batch demo</a></sub>
 
 ---
 
