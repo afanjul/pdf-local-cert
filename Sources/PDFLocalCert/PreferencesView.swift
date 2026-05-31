@@ -44,6 +44,14 @@ private struct GeneralSettingsTab: View {
                     .font(.caption)
                     .foregroundStyle(.secondary)
             }
+
+            Section(NSLocalizedString("output", comment: "")) {
+                TextField(NSLocalizedString("signed_suffix", comment: ""), text: $settings.signedSuffix)
+                Text(String(format: NSLocalizedString("signed_suffix_help", comment: ""),
+                            "documento\(settings.signedSuffix).pdf"))
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
         }
         .formStyle(.grouped)
     }

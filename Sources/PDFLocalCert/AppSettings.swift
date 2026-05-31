@@ -45,16 +45,31 @@ final class AppSettings {
             applyLanguage()
         }
     }
+    /// Suffix appended to the output filename (`<name><suffix>.pdf`). User-editable.
+    var signedSuffix: String {
+        didSet { UserDefaults.standard.set(signedSuffix, forKey: Keys.signedSuffix) }
+    }
 
     private enum Keys {
         static let theme = "settings.theme"
         static let language = "settings.language"
+        static let signedSuffix = "settings.signedSuffix"
+    }
+
+    /// Default when unset. Centralized so non-UI code (AppModel, Batch) agrees.
+    static let defaultSignedSuffix = "-firmado"
+
+    /// Effective suffix for code without an AppSettings instance. Falls back to
+    /// the default when the key is absent (not when the user deliberately clears it).
+    static var currentSignedSuffix: String {
+        UserDefaults.standard.string(forKey: Keys.signedSuffix) ?? defaultSignedSuffix
     }
 
     init() {
         let d = UserDefaults.standard
         theme = AppTheme(rawValue: d.string(forKey: Keys.theme) ?? "") ?? .system
         language = AppLanguage(rawValue: d.string(forKey: Keys.language) ?? "") ?? .system
+        signedSuffix = d.string(forKey: Keys.signedSuffix) ?? Self.defaultSignedSuffix
     }
 
     /// Push the chosen language into AppleLanguages so a relaunch (or newly

@@ -57,6 +57,9 @@
 "tab_general" = "General";
 "tab_license" = "License";
 "tab_about" = "About";
+"output" = "Output";
+"signed_suffix" = "Signed file suffix";
+"signed_suffix_help" = "Saved as: %@";
 
 /* About tab */
 "developed_by" = "Developed by Alejandro Fanjul";

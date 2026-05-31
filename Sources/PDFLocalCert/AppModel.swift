@@ -310,7 +310,7 @@ final class AppModel {
         let panel = NSSavePanel()
         panel.allowedContentTypes = [.pdf]
         let stem = documentURL?.deletingPathExtension().lastPathComponent ?? "documento"
-        panel.nameFieldStringValue = "\(stem)-firmado.pdf"
+        panel.nameFieldStringValue = "\(stem)\(AppSettings.currentSignedSuffix).pdf"
         guard panel.runModal() == .OK, let dest = panel.url else {
             statusMessage = "Guardado cancelado."
             return

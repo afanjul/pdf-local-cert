@@ -61,10 +61,11 @@ extension AppModel {
     private static func batchDestination(for url: URL) -> URL {
         let dir = url.deletingLastPathComponent()
         let stem = url.deletingPathExtension().lastPathComponent
-        var dest = dir.appendingPathComponent("\(stem)-firmado.pdf")
+        let suffix = AppSettings.currentSignedSuffix
+        var dest = dir.appendingPathComponent("\(stem)\(suffix).pdf")
         var n = 2
         while FileManager.default.fileExists(atPath: dest.path) {
-            dest = dir.appendingPathComponent("\(stem)-firmado (\(n)).pdf")
+            dest = dir.appendingPathComponent("\(stem)\(suffix) (\(n)).pdf")
             n += 1
         }
         return dest
