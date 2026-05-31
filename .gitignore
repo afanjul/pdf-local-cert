@@ -10,6 +10,10 @@
 core/target/
 target/
 
+# C# / .NET build output (windows/ shell + spike)
+**/bin/
+**/obj/
+
 # Local app/package builds (the built app + dmg live here)
 build/
 DerivedData/
@@ -17,6 +21,7 @@ DerivedData/
 
 # Large 4K demo masters — only the 1080p versions are published in the README
 Resources/*-4K.mp4
+apple/Resources/*-4K.mp4
 
 # Secrets / signing material
 *.p12
