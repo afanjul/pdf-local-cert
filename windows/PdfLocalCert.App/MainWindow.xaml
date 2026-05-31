@@ -8,17 +8,36 @@
     mc:Ignorable="d"
     Title="PDF Local Cert">
 
-    <Grid RowDefinitions="Auto,*" Padding="24" RowSpacing="16">
-        <StackPanel Grid.Row="0" Spacing="4">
-            <TextBlock Text="PDF Local Cert" Style="{StaticResource TitleTextBlockStyle}" />
-            <TextBlock Text="Windows shell (scaffold)" Style="{StaticResource CaptionTextBlockStyle}"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-        </StackPanel>
+    <Grid RowDefinitions="Auto,*,Auto">
+        <!-- Command bar -->
+        <CommandBar Grid.Row="0" DefaultLabelPosition="Right" HorizontalAlignment="Left" Background="Transparent">
+            <AppBarButton x:Name="OpenButton" Icon="OpenFile" Label="Open PDF" Click="OnOpenClicked" />
+            <AppBarButton x:Name="VerifyButton" Icon="Permissions" Label="Verify" Click="OnVerifyClicked" IsEnabled="False" />
+            <AppBarSeparator />
+            <AppBarButton x:Name="PingButton" Icon="Sync" Label="Ping core" Click="OnPingClicked" />
+        </CommandBar>
 
-        <StackPanel Grid.Row="1" Spacing="12" VerticalAlignment="Top">
-            <Button x:Name="PingButton" Content="Ping core" Click="OnPingClicked" />
-            <TextBlock x:Name="StatusText" TextWrapping="Wrap"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-        </StackPanel>
+        <!-- Page viewer: continuous vertical scroll of rendered pages -->
+        <ScrollViewer Grid.Row="1" x:Name="PageScroller" HorizontalScrollMode="Auto"
+                      HorizontalScrollBarVisibility="Auto" ZoomMode="Enabled"
+                      Background="{ThemeResource LayerFillColorDefaultBrush}" Padding="16">
+            <ItemsControl x:Name="PagesItems">
+                <ItemsControl.ItemTemplate>
+                    <DataTemplate>
+                        <Border Margin="0,0,0,16" HorizontalAlignment="Center"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                            <Image Source="{Binding Image}" Stretch="None" />
+                        </Border>
+                    </DataTemplate>
+                </ItemsControl.ItemTemplate>
+            </ItemsControl>
+        </ScrollViewer>
+
+        <!-- Status -->
+        <Border Grid.Row="2" Padding="16,8" Background="{ThemeResource LayerFillColorDefaultBrush}">
+            <TextBlock x:Name="StatusText" Text="Open a PDF to begin."
+                       Style="{StaticResource CaptionTextBlockStyle}"
+                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+        </Border>
     </Grid>
 </Window>
