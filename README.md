@@ -4,7 +4,7 @@
 
 <div align="center">
 
-<img src="Resources/logo/pdf-local-cert-logo-gradient.png" width="132" alt="PDF Local Cert logo" />
+<img src="apple/Resources/logo/pdf-local-cert-logo-gradient.png" width="132" alt="PDF Local Cert logo" />
 
 # PDF Local Cert
 
@@ -29,7 +29,7 @@
 
 <br/>
 
-<img src="Resources/demo-screenshot.png" width="900" alt="PDF Local Cert signing a contract with a visible signature, QR badge and timestamp" />
+<img src="apple/Resources/demo-screenshot.png" width="900" alt="PDF Local Cert signing a contract with a visible signature, QR badge and timestamp" />
 
 </div>
 
@@ -206,8 +206,10 @@ PDF Local Cert is **open source under [GPL-3.0](LICENSE)**. Two honest ways to u
 
 | Part | Path | Role |
 |------|------|------|
-| **SwiftUI shell** | `Sources/PDFLocalCert/` | UI, PDFKit rendering, Keychain enumeration, `SecKeyCreateSignature`, save, verifier |
+| **SwiftUI shell** | `apple/Sources/PDFLocalCert/` | UI, PDFKit rendering, Keychain enumeration, `SecKeyCreateSignature`, save, verifier |
 | **Rust sidecar** | `core/` | PDF byte-range surgery, CMS / PAdES assembly, RFC 3161 TSA client, verification |
+| **Windows shell** | `windows/` | C#/WinUI 3 shell at parity (CNG external-signer); see `windows/README.md` |
+| **Protocol** | `protocol/` | Shared JSON contract + conformance vectors both shells run against |
 
 <details>
 <summary><b>🔑 How the key stays in the Keychain (external-signer pattern)</b></summary>
@@ -241,14 +243,14 @@ hardware-backed keys (DNIe, smartcards) work transparently.
 > **Requirements:** Xcode / Swift toolchain · Rust (`cargo`).
 
 ```sh
-# Ad-hoc signed → build/PDF Local Cert.app
-bash scripts/build.sh
+# Ad-hoc signed → apple/build/PDF Local Cert.app
+bash apple/scripts/build.sh
 
 # Or sign with your Apple Developer identity
-SIGN_ID="Apple Development: Your Name (TEAMID)" bash scripts/build.sh
+SIGN_ID="Apple Development: Your Name (TEAMID)" bash apple/scripts/build.sh
 
 # Run it
-open "build/PDF Local Cert.app"
+open "apple/build/PDF Local Cert.app"
 ```
 
 <details>
@@ -272,13 +274,16 @@ certificate. Validated end-to-end for **B-B** and **B-T** (`valid=true, crypto=o
 ## 📂 Project layout
 
 ```
-Sources/PDFLocalCert/      SwiftUI app
-Sources/PDFLocalCertKit/   shared helpers (coordinate mapping…)
-core/                      Rust signing sidecar
-Resources/                 Info.plist, entitlements, icons, localized strings, logo
-scripts/                   build.sh, make-icns.sh
-docs/                      implementation spec, progress, task checklist
-samples/                   example contract PDF for demos
+core/                          Rust signing sidecar (shared by all shells)
+apple/                         macOS shell (SwiftUI)
+  Sources/PDFLocalCert/        SwiftUI app
+  Sources/PDFLocalCertKit/     shared helpers (coordinate mapping…)
+  Resources/                   Info.plist, entitlements, icons, localized strings, logo
+  scripts/                     build.sh, make-icns.sh
+windows/                       Windows shell (C#/WinUI 3) — see windows/README.md
+protocol/                      shared JSON protocol contract + conformance vectors
+docs/                          implementation spec, progress, task checklist
+samples/                       example contract PDF for demos
 ```
 
 ---

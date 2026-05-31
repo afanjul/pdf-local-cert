@@ -15,9 +15,10 @@ struct CoreClient {
         if FileManager.default.isExecutableFile(atPath: bundleHelper.path) {
             return bundleHelper.path
         }
-        // Dev fallback.
+        // Dev fallback: `swift run` executes from the package dir (<repo>/apple);
+        // the shared core lives one level up at <repo>/core.
         let dev = URL(fileURLWithPath: FileManager.default.currentDirectoryPath)
-            .appendingPathComponent("core/target/release/pdflocalcert-core")
+            .appendingPathComponent("../core/target/release/pdflocalcert-core")
         return dev.path
     }
 
