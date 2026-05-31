@@ -12,6 +12,7 @@
         <!-- Command bar -->
         <CommandBar Grid.Row="0" DefaultLabelPosition="Right" HorizontalAlignment="Left" Background="Transparent">
             <AppBarButton x:Name="OpenButton" Icon="OpenFile" Label="Open PDF" Click="OnOpenClicked" />
+            <AppBarButton x:Name="SignButton" Icon="Edit" Label="Sign" Click="OnSignClicked" IsEnabled="False" />
             <AppBarButton x:Name="VerifyButton" Icon="Permissions" Label="Verify" Click="OnVerifyClicked" IsEnabled="False" />
             <AppBarSeparator />
             <AppBarButton x:Name="PingButton" Icon="Sync" Label="Ping core" Click="OnPingClicked" />

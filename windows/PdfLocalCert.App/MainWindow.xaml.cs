@@ -36,11 +36,69 @@ public sealed partial class MainWindow : Window
             var pages = await _renderer.RenderAllAsync();
             PagesItems.ItemsSource = pages;
             VerifyButton.IsEnabled = true;
+            SignButton.IsEnabled = true;
             StatusText.Text = $"{System.IO.Path.GetFileName(path)} — {pages.Count} page(s)";
         }
         catch (Exception ex)
         {
             StatusText.Text = $"Failed to open: {ex.Message}";
+        }
+    }
+
+    private async void OnSignClicked(object sender, RoutedEventArgs e)
+    {
+        if (_renderer.FilePath is null) return;
+
+        List<CertificateInfo> identities;
+        try
+        {
+            identities = IdentityStore.LoadSigningIdentities();
+        }
+        catch (Exception ex)
+        {
+            await ShowDialog("Sign", $"Could not read the certificate store: {ex.Message}");
+            return;
+        }
+        if (identities.Count == 0)
+        {
+            await ShowDialog("Sign", "No signing certificates found in your personal store (Certificates - Current User \\ Personal). Import your certificate and try again.");
+            return;
+        }
+
+        var dialog = new SignDialog(identities) { XamlRoot = Content.XamlRoot };
+        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
+        if (dialog.SelectedCert is not { } cert) return;
+
+        StatusText.Text = "Signing…";
+        try
+        {
+            // Invisible signature for now (whole-document). Visible placement is 4.5.
+            var req = new SignRequest
+            {
+                PdfPath = _renderer.FilePath,
+                Cert = cert,
+                Placements = Array.Empty<PlacementSpec>(),
+                Reason = dialog.Reason,
+                Location = dialog.Location,
+                TsaUrl = dialog.TsaUrl,
+            };
+            var result = await Task.Run(() => new SigningService().Sign(req));
+            StatusText.Text = $"Signed ({result.PadesLevel}) — {result.OutputPath}";
+            await ShowDialog("Signed",
+                $"Signature created.\n\nSigner: {result.SignerCommonName}\nLevel: {result.PadesLevel}\n\nSaved to:\n{result.OutputPath}");
+
+            // Reload the signed output so Verify reflects it immediately.
+            await LoadAsync(result.OutputPath);
+        }
+        catch (SigningException ex)
+        {
+            StatusText.Text = $"Sign failed [{ex.Code}]";
+            await ShowDialog("Sign failed", $"{ex.Message}\n\n(code: {ex.Code})");
+        }
+        catch (Exception ex)
+        {
+            StatusText.Text = "Sign failed";
+            await ShowDialog("Sign failed", ex.Message);
         }
     }
 

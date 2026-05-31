@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentDialog
+    x:Class="PdfLocalCert.App.SignDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    Title="Sign PDF"
+    PrimaryButtonText="Sign"
+    CloseButtonText="Cancel"
+    DefaultButton="Primary">
+
+    <ScrollViewer>
+        <StackPanel Spacing="14" MinWidth="360">
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Certificate" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <ComboBox x:Name="CertCombo" HorizontalAlignment="Stretch"
+                          SelectionChanged="OnCertChanged" />
+                <TextBlock x:Name="CertDetail" Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Reason (optional)" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <TextBox x:Name="ReasonBox" PlaceholderText="e.g. I approve this document" />
+            </StackPanel>
+
+            <StackPanel Spacing="4">
+                <TextBlock Text="Location (optional)" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <TextBox x:Name="LocationBox" PlaceholderText="e.g. Madrid, ES" />
+            </StackPanel>
+
+            <StackPanel Spacing="6">
+                <ToggleSwitch x:Name="TimestampToggle" Header="Add trusted timestamp (PAdES B-T)"
+                              OffContent="Off" OnContent="On" Toggled="OnTimestampToggled" />
+                <TextBox x:Name="TsaBox" Header="TSA URL (RFC 3161)"
+                         Text="http://timestamp.digicert.com" IsEnabled="False" />
+            </StackPanel>
+
+            <muxc:InfoBar xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+                          IsOpen="True" Severity="Informational" IsClosable="False"
+                          Message="This creates an invisible signature covering the whole document. Visible signature placement is coming next." />
+        </StackPanel>
+    </ScrollViewer>
+</ContentDialog>

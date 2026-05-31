@@ -4,17 +4,18 @@ namespace PdfLocalCert.Core;
 
 /// <summary>A signing identity discovered in the Windows certificate store.</summary>
 /// <remarks>Mirrors macOS CertificateInfo. Holds the X509Certificate2 so the signer
-/// can reach its private key via CNG; the key itself never leaves the store.</remarks>
+/// can reach its private key via CNG; the key itself never leaves the store.
+/// Init-only (not `required`) so the WinUI XAML type provider can activate it.</remarks>
 public sealed class CertificateInfo
 {
-    public required string CommonName { get; init; }
-    public required string Issuer { get; init; }
-    public required DateTime NotAfter { get; init; }
-    public required bool CanSign { get; init; }
-    public required string Thumbprint { get; init; }
+    public string CommonName { get; init; } = "";
+    public string Issuer { get; init; } = "";
+    public DateTime NotAfter { get; init; }
+    public bool CanSign { get; init; }
+    public string Thumbprint { get; init; } = "";
     /// <summary>"RSA" | "ECDSA" | other OID friendly name.</summary>
-    public required string KeyAlgorithm { get; init; }
-    public required X509Certificate2 Certificate { get; init; }
+    public string KeyAlgorithm { get; init; } = "";
+    public X509Certificate2 Certificate { get; init; } = null!;
 
     public bool IsExpired => NotAfter < DateTime.Now;
 }
