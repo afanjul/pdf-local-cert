@@ -55,14 +55,10 @@
 </tr>
 <tr>
 <td width="50%">
-
-https://github.com/afanjul/pdf-local-cert/raw/main/Resources/demo-video-signing-1080p.mp4
-
+  <video src="https://raw.githubusercontent.com/afanjul/pdf-local-cert/main/Resources/demo-video-signing-1080p.mp4" poster="https://raw.githubusercontent.com/afanjul/pdf-local-cert/main/Resources/demo-poster-signing.png" controls muted width="100%"></video>
 </td>
 <td width="50%">
-
-https://github.com/afanjul/pdf-local-cert/raw/main/Resources/demo-video-batch-signing-1080p.mp4
-
+  <video src="https://raw.githubusercontent.com/afanjul/pdf-local-cert/main/Resources/demo-video-batch-signing-1080p.mp4" poster="https://raw.githubusercontent.com/afanjul/pdf-local-cert/main/Resources/demo-poster-batch.png" controls muted width="100%"></video>
 </td>
 </tr>
 <tr>
@@ -70,6 +66,8 @@ https://github.com/afanjul/pdf-local-cert/raw/main/Resources/demo-video-batch-si
 <td align="center"><sub>Drop many PDFs, sign them all in one pass.</sub></td>
 </tr>
 </table>
+
+<sub>▶︎ Videos not playing inline? <a href="https://github.com/afanjul/pdf-local-cert/raw/main/Resources/demo-video-signing-1080p.mp4">single-sign demo</a> · <a href="https://github.com/afanjul/pdf-local-cert/raw/main/Resources/demo-video-batch-signing-1080p.mp4">batch demo</a></sub>
 
 ---
 
