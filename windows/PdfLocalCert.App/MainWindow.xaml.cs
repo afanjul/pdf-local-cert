@@ -20,7 +20,21 @@ public sealed partial class MainWindow : Window
     private RenderedPage? _activePage;
     private const double MinBoxPx = 24;
 
-    public MainWindow() => InitializeComponent();
+    public MainWindow()
+    {
+        InitializeComponent();
+        VersionText.Text = $"v{AppVersion}";
+    }
+
+    /// <summary>App version from the MSIX package identity (matches the installed build).</summary>
+    private static string AppVersion
+    {
+        get
+        {
+            var v = Windows.ApplicationModel.Package.Current.Id.Version;
+            return $"{v.Major}.{v.Minor}.{v.Build}.{v.Revision}";
+        }
+    }
 
     private async void OnOpenClicked(object sender, RoutedEventArgs e)
     {

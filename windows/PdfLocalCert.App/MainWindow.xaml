@@ -118,9 +118,14 @@
 
         <!-- Status -->
         <Border Grid.Row="2" Padding="16,8" Background="{ThemeResource LayerFillColorDefaultBrush}">
-            <TextBlock x:Name="StatusText" Text="Open a PDF to begin."
-                       Style="{StaticResource CaptionTextBlockStyle}"
-                       Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <TextBlock Grid.Column="0" x:Name="StatusText" Text="Open a PDF to begin."
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                <TextBlock Grid.Column="1" x:Name="VersionText" VerticalAlignment="Center"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+            </Grid>
         </Border>
     </Grid>
 </Window>
