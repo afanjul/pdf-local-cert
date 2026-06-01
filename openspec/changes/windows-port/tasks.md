@@ -92,8 +92,8 @@ same sections, same options, same sign/verify/batch processes. Decisions:
 
 ### 7.3 Batch tab
 
-- [ ] 7.3.1 Batch view: add/clear files, `ListView` of items with per-file status glyph (pending/signing/done/failed) + message, Sign-all button, summary line, Pro lock
-- [ ] 7.3.2 Wire batch signing to the core with default placement per file, `<name><suffix>.pdf` output beside each source, collision-safe naming
+- [x] 7.3.1 Batch view: add/clear files, `ListView` of items with per-file status glyph (pending/signing/done/failed) + message, Sign-all button, summary line, Pro lock
+- [x] 7.3.2 Wire batch signing to the core with default placement per file, `<name><suffix>.pdf` output beside each source, collision-safe naming
 
 ### 7.4 Verify tab
 

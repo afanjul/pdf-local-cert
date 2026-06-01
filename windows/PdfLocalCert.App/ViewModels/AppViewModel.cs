@@ -213,6 +213,53 @@ public sealed partial class AppViewModel : ObservableObject
 
     [ObservableProperty] private bool _showPaywall;
 
+    public Visibility ProLockVisibility => License.IsPro ? Visibility.Collapsed : Visibility.Visible;
+
+    // ── Batch (mirrors macOS Batch) ──────────────────────────────────────────
+
+    public ObservableCollection<BatchItem> BatchItems { get; } = new();
+
+    [ObservableProperty] private bool _batchRunning;
+
+    public Visibility BatchEmptyVisibility => BatchItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility BatchListVisibility => BatchItems.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+
+    public string BatchSummary
+    {
+        get
+        {
+            int done = BatchItems.Count(i => i.Status == BatchStatus.Done);
+            int failed = BatchItems.Count(i => i.Status == BatchStatus.Failed);
+            return $"{done} done · {failed} failed · {BatchItems.Count} total";
+        }
+    }
+
+    /// <summary>Add PDF paths to the queue, de-duplicating by path.</summary>
+    public void AddBatchFiles(IEnumerable<string> paths)
+    {
+        var existing = BatchItems.Select(i => i.Path).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        foreach (var p in paths)
+        {
+            if (p.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase) && existing.Add(p))
+                BatchItems.Add(new BatchItem(p));
+        }
+        RaiseBatchState();
+    }
+
+    public void ClearBatch()
+    {
+        BatchItems.Clear();
+        RaiseBatchState();
+    }
+
+    /// <summary>Re-raise the batch-derived properties (call after items/status change).</summary>
+    public void RaiseBatchState()
+    {
+        OnPropertyChanged(nameof(BatchSummary));
+        OnPropertyChanged(nameof(BatchEmptyVisibility));
+        OnPropertyChanged(nameof(BatchListVisibility));
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     /// <summary>Pick a sensible default identity (first valid, else first).</summary>

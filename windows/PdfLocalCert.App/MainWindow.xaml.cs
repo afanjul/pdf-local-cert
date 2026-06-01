@@ -130,6 +130,124 @@ public sealed partial class MainWindow : Window
 
     private void OnDeletePreset(object sender, RoutedEventArgs e) => ViewModel.DeleteSelectedPreset();
 
+    // ── Batch ────────────────────────────────────────────────────────────────
+
+    private async void OnBatchAdd(object sender, RoutedEventArgs e)
+    {
+        var picker = new FileOpenPicker { SuggestedStartLocation = PickerLocationId.DocumentsLibrary };
+        picker.FileTypeFilter.Add(".pdf");
+        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+        var files = await picker.PickMultipleFilesAsync();
+        if (files is { Count: > 0 }) ViewModel.AddBatchFiles(files.Select(f => f.Path));
+    }
+
+    private void OnBatchClear(object sender, RoutedEventArgs e) => ViewModel.ClearBatch();
+
+    private async void OnBatchDrop(object sender, DragEventArgs e)
+    {
+        if (!e.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems)) return;
+        var items = await e.DataView.GetStorageItemsAsync();
+        ViewModel.AddBatchFiles(items.OfType<Windows.Storage.StorageFile>().Select(f => f.Path));
+    }
+
+    private async void OnBatchSignAll(object sender, RoutedEventArgs e)
+    {
+        if (ViewModel.BatchRunning) return;
+        if (ViewModel.SelectedCert is not { CanSign: true, IsExpired: false } cert)
+        {
+            await ShowDialog("Batch", "Select a valid signing certificate in the Sign tab first.");
+            return;
+        }
+        // Batch is a Pro feature (mirrors macOS).
+        if (!ViewModel.License.IsPro)
+        {
+            await ShowPaywall("Batch signing is a Pro feature.");
+            return;
+        }
+
+        ViewModel.BatchRunning = true;
+        try
+        {
+            foreach (var item in ViewModel.BatchItems)
+            {
+                if (item.Status != BatchStatus.Pending) continue;
+                item.Status = BatchStatus.Signing;
+                ViewModel.RaiseBatchState();
+                try
+                {
+                    var placements = new List<PlacementSpec>();
+                    if (ViewModel.VisibleSignature)
+                    {
+                        var p = await DefaultPlacementAsync(item.Path, cert.CommonName);
+                        if (p is not null) placements.Add(p);
+                    }
+                    var req = new SignRequest
+                    {
+                        PdfPath = item.Path,
+                        Cert = cert,
+                        Placements = placements,
+                        Reason = string.IsNullOrWhiteSpace(ViewModel.Reason) ? null : ViewModel.Reason,
+                        Location = string.IsNullOrWhiteSpace(ViewModel.Location) ? null : ViewModel.Location,
+                        TsaUrl = ViewModel.UseTimestamp && !string.IsNullOrWhiteSpace(ViewModel.TsaUrl) ? ViewModel.TsaUrl : null,
+                    };
+                    var result = await Task.Run(() => new SigningService().Sign(req));
+                    var dest = BatchDestination(item.Path);
+                    File.Copy(result.OutputPath, dest, overwrite: false);
+                    ViewModel.License.RecordSign();
+                    item.Status = BatchStatus.Done;
+                    item.Message = $"{result.PadesLevel} · {System.IO.Path.GetFileName(dest)}";
+                }
+                catch (SigningException ex)
+                {
+                    item.Status = BatchStatus.Failed;
+                    item.Message = $"{ex.Message} ({ex.Code})";
+                }
+                catch (Exception ex)
+                {
+                    item.Status = BatchStatus.Failed;
+                    item.Message = ex.Message;
+                }
+                ViewModel.RaiseBatchState();
+            }
+        }
+        finally
+        {
+            ViewModel.BatchRunning = false;
+            ViewModel.RaiseBatchState();
+        }
+    }
+
+    /// <summary>Default bottom-right box on page 1, in PDF points (mirrors macOS).</summary>
+    private static async Task<PlacementSpec?> DefaultPlacementAsync(string path, string signerName)
+    {
+        var file = await Windows.Storage.StorageFile.GetFileFromPathAsync(path);
+        var doc = await Windows.Data.Pdf.PdfDocument.LoadFromFileAsync(file);
+        if (doc.PageCount == 0) return null;
+        using var page = doc.GetPage(0);
+        const double DipToPoint = 72.0 / 96.0;
+        double pw = page.Size.Width * DipToPoint;
+        double w = 200, h = 60, m = 36;
+        return new PlacementSpec
+        {
+            Page = 1, X = pw - w - m, Y = m, W = w, H = h,
+            Lines = new List<string> { $"Firmado por: {signerName}", DateTime.Now.ToString("dd/MM/yyyy HH:mm") },
+            Border = true, Background = true,
+        };
+    }
+
+    /// <summary>Collision-safe "&lt;name&gt;&lt;suffix&gt;.pdf" beside the source.</summary>
+    private static string BatchDestination(string sourcePath)
+    {
+        var dir = System.IO.Path.GetDirectoryName(sourcePath)!;
+        var stem = System.IO.Path.GetFileNameWithoutExtension(sourcePath);
+        var suffix = SettingsDialog.CurrentSuffix;
+        var dest = System.IO.Path.Combine(dir, $"{stem}{suffix}.pdf");
+        int n = 2;
+        while (File.Exists(dest))
+            dest = System.IO.Path.Combine(dir, $"{stem}{suffix} ({n++}).pdf");
+        return dest;
+    }
+
     private async void OnOpenClicked(object sender, RoutedEventArgs e)
     {
         // Unpackaged WinUI: pickers must be associated with the window's HWND.
