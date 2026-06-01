@@ -29,6 +29,13 @@ public sealed class PdfRenderer
         return Document.PageCount > 0;
     }
 
+    /// <summary>Drop the current document (return to the empty state).</summary>
+    public void Reset()
+    {
+        Document = null;
+        FilePath = null;
+    }
+
     /// <summary>Render one page at RenderScale times its native size.</summary>
     public async Task<RenderedPage> RenderPageAsync(uint index, double scale = RenderScale)
     {

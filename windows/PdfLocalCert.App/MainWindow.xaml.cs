@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using PdfLocalCert.App.ViewModels;
 using PdfLocalCert.Core;
 using Windows.Foundation;
 using Windows.Storage.Pickers;
@@ -11,7 +12,9 @@ namespace PdfLocalCert.App;
 public sealed partial class MainWindow : Window
 {
     private readonly PdfRenderer _renderer = new();
-    private readonly LicenseManager _license = new();
+
+    /// <summary>Single source of truth for shell state (mirrors macOS AppModel).</summary>
+    public AppViewModel ViewModel { get; }
 
     // Signature-box drag state.
     private bool _drawing;
@@ -22,6 +25,7 @@ public sealed partial class MainWindow : Window
 
     public MainWindow()
     {
+        ViewModel = new AppViewModel();   // must exist before x:Bind runs
         InitializeComponent();
         VersionText.Text = $"v{AppVersion}";
     }
@@ -34,6 +38,28 @@ public sealed partial class MainWindow : Window
             var v = Windows.ApplicationModel.Package.Current.Id.Version;
             return $"{v.Major}.{v.Minor}.{v.Build}.{v.Revision}";
         }
+    }
+
+    /// <summary>SelectorBar → view model section (Sign / Batch / Verify).</summary>
+    private void OnSectionChanged(SelectorBar sender, SelectorBarSelectionChangedEventArgs e)
+    {
+        ViewModel.CurrentSection = sender.SelectedItem == BatchSectionItem ? AppSection.Batch
+            : sender.SelectedItem == VerifySectionItem ? AppSection.Verify
+            : AppSection.Sign;
+    }
+
+    /// <summary>Close the current document and return to the empty state.</summary>
+    private void OnNewClicked(object sender, RoutedEventArgs e)
+    {
+        _renderer.Reset();
+        PagesItems.ItemsSource = null;
+        ViewModel.ClearDocument();
+        NewButton.IsEnabled = false;
+        VerifyButton.IsEnabled = false;
+        SignButton.IsEnabled = false;
+        SignAndSaveButton.IsEnabled = false;
+        VisibleSigToggle.IsEnabled = false;
+        VisibleSigToggle.IsOn = false;
     }
 
     private async void OnOpenClicked(object sender, RoutedEventArgs e)
@@ -53,22 +79,24 @@ public sealed partial class MainWindow : Window
     {
         try
         {
-            StatusText.Text = "Rendering…";
+            ViewModel.StatusText = "Rendering…";
             var ok = await _renderer.LoadAsync(path);
-            if (!ok) { StatusText.Text = "Empty or unreadable PDF."; return; }
+            if (!ok) { ViewModel.StatusText = "Empty or unreadable PDF."; return; }
 
             var pages = await _renderer.RenderAllAsync();
             FitPagesToWidth(pages);
             PagesItems.ItemsSource = pages;
+            ViewModel.FilePath = path;
+            NewButton.IsEnabled = true;
             VerifyButton.IsEnabled = true;
             SignButton.IsEnabled = true;
             SignAndSaveButton.IsEnabled = true;
             VisibleSigToggle.IsEnabled = true;
-            StatusText.Text = $"{System.IO.Path.GetFileName(path)} — {pages.Count} page(s)";
+            ViewModel.StatusText = $"{System.IO.Path.GetFileName(path)} — {pages.Count} page(s)";
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"Failed to open: {ex.Message}";
+            ViewModel.StatusText = $"Failed to open: {ex.Message}";
         }
     }
 
@@ -93,7 +121,7 @@ public sealed partial class MainWindow : Window
         if (_renderer.FilePath is null) return;
 
         // Free-tier gate: block when the monthly quota is exhausted (Pro is unlimited).
-        if (!_license.IsPro && _license.RemainingFreeSigns <= 0)
+        if (!ViewModel.License.IsPro && ViewModel.License.RemainingFreeSigns <= 0)
         {
             await ShowPaywall($"You have used all {LicenseManager.FreeMonthlyLimit} free signatures this month.");
             return;
@@ -138,7 +166,7 @@ public sealed partial class MainWindow : Window
             }
         }
 
-        StatusText.Text = "Signing…";
+        ViewModel.StatusText = "Signing…";
         try
         {
             var req = new SignRequest
@@ -151,8 +179,8 @@ public sealed partial class MainWindow : Window
                 TsaUrl = dialog.TsaUrl,
             };
             var result = await Task.Run(() => new SigningService().Sign(req));
-            _license.RecordSign(); // count against the free monthly quota (no-op for Pro)
-            StatusText.Text = $"Signed ({result.PadesLevel}). Choose where to save…";
+            ViewModel.License.RecordSign(); // count against the free monthly quota (no-op for Pro)
+            ViewModel.StatusText = $"Signed ({result.PadesLevel}). Choose where to save…";
 
             // Let the user save the signed PDF wherever they want.
             var suggested = System.IO.Path.GetFileNameWithoutExtension(_renderer.FilePath) + "-firmado";
@@ -176,7 +204,7 @@ public sealed partial class MainWindow : Window
                 finalPath = result.OutputPath; // user cancelled save; keep the temp copy
             }
 
-            StatusText.Text = $"Signed ({result.PadesLevel}) — {finalPath}";
+            ViewModel.StatusText = $"Signed ({result.PadesLevel}) — {finalPath}";
             await ShowDialog("Signed",
                 $"Signature created.\n\nSigner: {result.SignerCommonName}\nLevel: {result.PadesLevel}\n\nSaved to:\n{finalPath}");
 
@@ -185,12 +213,12 @@ public sealed partial class MainWindow : Window
         }
         catch (SigningException ex)
         {
-            StatusText.Text = $"Sign failed [{ex.Code}]";
+            ViewModel.StatusText = $"Sign failed [{ex.Code}]";
             await ShowDialog("Sign failed", $"{ex.Message}\n\n(code: {ex.Code})");
         }
         catch (Exception ex)
         {
-            StatusText.Text = "Sign failed";
+            ViewModel.StatusText = "Sign failed";
             await ShowDialog("Sign failed", ex.Message);
         }
     }
@@ -234,7 +262,7 @@ public sealed partial class MainWindow : Window
     private void OnVisibleToggled(object sender, RoutedEventArgs e)
     {
         var on = VisibleSigToggle.IsOn;
-        StatusText.Text = on
+        ViewModel.StatusText = on
             ? "Visible signature: drag a box on the page where the signature should appear."
             : "Visible signature off (an invisible, whole-document signature will be used).";
         if (!on && PagesItems.ItemsSource is IEnumerable<RenderedPage> pages)
@@ -279,11 +307,11 @@ public sealed partial class MainWindow : Window
         if (_activePage.BoxW < MinBoxPx || _activePage.BoxH < MinBoxPx)
         {
             _activePage.ClearBox();
-            StatusText.Text = "Box too small - drag a larger area for the signature.";
+            ViewModel.StatusText = "Box too small - drag a larger area for the signature.";
         }
         else
         {
-            StatusText.Text = $"Signature box placed on page {_activePage.Index + 1}. Click Sign to apply.";
+            ViewModel.StatusText = $"Signature box placed on page {_activePage.Index + 1}. Click Sign to apply.";
         }
         _activeCanvas = null;
         _activePage = null;
@@ -291,13 +319,13 @@ public sealed partial class MainWindow : Window
 
     private async void OnSettingsClicked(object sender, RoutedEventArgs e)
     {
-        var dialog = new SettingsDialog(_license) { XamlRoot = Content.XamlRoot };
+        var dialog = new SettingsDialog(ViewModel.License) { XamlRoot = Content.XamlRoot };
         await dialog.ShowAsync();
     }
 
     private async Task ShowPaywall(string reason)
     {
-        var dialog = new SettingsDialog(_license, paywallReason: reason) { XamlRoot = Content.XamlRoot };
+        var dialog = new SettingsDialog(ViewModel.License, paywallReason: reason) { XamlRoot = Content.XamlRoot };
         await dialog.ShowAsync();
     }
 
@@ -306,11 +334,11 @@ public sealed partial class MainWindow : Window
         try
         {
             var ok = new CoreClient().Ping();
-            StatusText.Text = ok ? $"core OK — {CoreClient.ResolveExePath()}" : "core ping failed";
+            ViewModel.StatusText = ok ? $"core OK — {CoreClient.ResolveExePath()}" : "core ping failed";
         }
         catch (Exception ex)
         {
-            StatusText.Text = $"core error: {ex.Message}";
+            ViewModel.StatusText = $"core error: {ex.Message}";
         }
     }
 

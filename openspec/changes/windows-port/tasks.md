@@ -72,9 +72,9 @@ same sections, same options, same sign/verify/batch processes. Decisions:
 
 ### 7.0 Foundation
 
-- [ ] 7.0.1 Add `CommunityToolkit.Mvvm`, `CommunityToolkit.WinUI.Controls.Segmented`, and `CommunityToolkit.WinUI.Controls.SettingsControls` package refs to `PdfLocalCert.App`
-- [ ] 7.0.2 Introduce `AppViewModel : ObservableObject` mirroring macOS `AppModel` (document, identities/selectedCert, visibleSignature, appearance, useTimestamp/tsaURL, signAllPages, zoom, status/error, license, batch, verifier collections); migrate `MainWindow` + dialogs to bind to it via `x:Bind`
-- [ ] 7.0.3 Port the macOS section navigation: a `Segmented` Sign / Batch / Verify switcher in the title/command bar driving a content host (replaces the Verify-as-dialog model)
+- [x] 7.0.1 Add `CommunityToolkit.Mvvm` to `PdfLocalCert.App` (nav uses the built-in `SelectorBar`, so `Segmented` is not needed; `SettingsControls` is deferred to its phase 7.5)
+- [x] 7.0.2 Introduce `AppViewModel : ObservableObject` mirroring macOS `AppModel` (document, identities/selectedCert, visibleSignature, appearance, useTimestamp/tsaURL, signAllPages, zoom, status/error, license, batch, verifier collections); migrate `MainWindow` + dialogs to bind to it via `x:Bind`
+- [x] 7.0.3 Port the macOS section navigation: a `Segmented` Sign / Batch / Verify switcher in the title/command bar driving a content host (replaces the Verify-as-dialog model)
 
 ### 7.1 Sign tab parity
 
