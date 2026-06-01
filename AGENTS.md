@@ -76,30 +76,41 @@ cd core && cargo build --release   # see memory note re: cargo network quirk
 ```
 
 ### Windows shell (on a Windows host over SSH)
-Three projects under `windows/`: `PdfLocalCert.Core` (UI-free logic, unit-tested on any
-host), `PdfLocalCert.App` (WinUI 3 shell), `PdfLocalCert.Core.Tests`.
+Solution `windows/PdfLocalCert.sln` ties three projects: `PdfLocalCert.Core` (UI-free
+logic, unit-tested on any host), `PdfLocalCert.App` (WinUI 3 shell, ships as
+`PdfLocalCert.exe`), `PdfLocalCert.Core.Tests`. **x64 only** (runs under x64 emulation
+on the ARM box — do not build arm64).
 
-Two publish layouts — **the `WindowsPackageType` flag is opposite for each, do not mix:**
+Unit tests run headless anywhere: `dotnet test windows\PdfLocalCert.Core.Tests`.
 
-- **Loose dev .exe** (fast inner loop, no install):
-  ```powershell
-  # winvm has only Windows PowerShell (no pwsh) — invoke the script with &, not pwsh:
-  & windows\scripts\publish-loose.ps1          # win-x64; x64-on-ARM emulation on winvm
-  ```
-  Publishes `WindowsPackageType=None` + `WindowsAppSDKSelfContained=true`. The
-  self-contained flag is required: a framework-dependent unpackaged build runs the
-  WinAppSDK DeploymentManager auto-initializer at startup and crashes here with
-  `REGDB_E_CLASSNOTREG` before any window. Self-contained bundles the runtime in-folder
-  and removes the auto-init. **x64 only** — we do not build arm64 (it ran fine under
-  x64 emulation; arm64 was a wrong turn).
+**Run the app = MSIX, always.** There is no loose-`.exe` dev path — it was tried and
+abandoned (see "Why MSIX-only" below). Build → pack → install:
+```powershell
+# winvm has only Windows PowerShell (no pwsh); invoke .ps1 with &, not pwsh.
+# 1. payload MUST be WindowsPackageType=MSIX (a None-typed payload silently exits
+#    inside a package — packaged apps get the runtime from the dependency graph).
+dotnet publish windows\PdfLocalCert.App -c Release -r win-x64 `
+  --self-contained true -p:WindowsPackageType=MSIX -o <payload>
+# 2. pack + dev self-sign -> windows\build\PdfLocalCert.msix
+& windows\scripts\pack-msix.ps1 -PublishDir <payload>
+# 3. install (elevated, one-time cert trust); launch from the Start menu
+& windows\scripts\install-msix.ps1
+```
 
-- **MSIX package** (ship/install test):
-  ```powershell
-  & windows\scripts\pack-msix.ps1 -PublishDir <dir>   # -> windows/build/PdfLocalCert.msix
-  ```
-  Payload MUST be published `WindowsPackageType=MSIX`. A `None`-typed payload inside an
-  MSIX **silently exits at launch** (packaged app gets its runtime from the dependency
-  graph, not the bootstrapper). See header of `pack-msix.ps1`.
+**Building from the share needs a `subst` drive.** `mt.exe` (manifest tool, run by the
+MSIX/self-contained targets) rejects UNC working dirs (`c1010070 ... volume label syntax
+is incorrect`). subst a drive letter onto the repo first, build from there:
+```powershell
+subst S: \\Mac\Home\apps\pdf-local-cert; Set-Location S:\windows
+# ...dotnet publish... then:
+Set-Location C:\; subst S: /d
+```
+
+**Why MSIX-only (don't re-litigate):** a loose unpackaged `.exe` on this box fails two
+ways at once — framework-dependent crashes at startup needing the x64 **DDLM**
+(`0xc000027b` in `combase.dll`; `REGDB_E_CLASSNOTREG`), and self-contained can't be
+built because `mt.exe` can't embed the reg-free WinRT manifest from the UNC share.
+Burned a long session proving this. MSIX sidesteps both via its dependency graph.
 
 ## Conventions
 

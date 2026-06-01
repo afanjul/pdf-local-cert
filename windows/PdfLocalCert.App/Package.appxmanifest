@@ -39,7 +39,7 @@
   </Resources>
 
   <Applications>
-    <Application Id="App" Executable="PdfLocalCert.App.exe" EntryPoint="Windows.FullTrustApplication">
+    <Application Id="App" Executable="PdfLocalCert.exe" EntryPoint="Windows.FullTrustApplication">
       <uap:VisualElements
         DisplayName="PDF Local Cert"
         Description="Sign and verify PDFs locally. Your private key never leaves the Windows certificate store."

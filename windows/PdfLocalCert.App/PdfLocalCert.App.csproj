@@ -26,6 +26,9 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>latest</LangVersion>
     <RootNamespace>PdfLocalCert.App</RootNamespace>
+    <!-- Project keeps the .App suffix to distinguish it from PdfLocalCert.Core, but the
+         shipped binary is just PdfLocalCert.exe (no ugly ".App." in the product name). -->
+    <AssemblyName>PdfLocalCert</AssemblyName>
     <ApplicationManifest>app.manifest</ApplicationManifest>
     <DefaultLanguage>en-US</DefaultLanguage>
     <WindowsPackageType>None</WindowsPackageType>
