@@ -12,7 +12,16 @@
   Tooling paths and the production Authenticode path are documented in windows/RELEASE.md.
 
 .PARAMETER PublishDir
-  The self-contained publish output (dotnet publish -r win-x64 --self-contained true).
+  The self-contained publish output. IMPORTANT: it MUST be published with
+  WindowsPackageType=MSIX, e.g.
+
+    dotnet publish windows/PdfLocalCert.App -c Release -r win-x64 `
+      --self-contained true -p:WindowsPackageType=MSIX -o <PublishDir>
+
+  A payload built with WindowsPackageType=None (the loose/dev layout) calls the
+  WinAppSDK bootstrapper to find the runtime; inside an MSIX that is wrong (the
+  package gets its runtime from the dependency graph) and the app SILENTLY EXITS
+  at launch with no crash dialog. Always repackage from an MSIX-typed payload.
 
 .PARAMETER OutFile
   Path of the .msix to produce.
