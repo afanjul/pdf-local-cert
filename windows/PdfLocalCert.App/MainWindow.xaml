@@ -35,96 +35,161 @@
             <Grid x:Name="SignSection" Visibility="{x:Bind ViewModel.SignVisibility, Mode=OneWay}"
                   ColumnDefinitions="*,320">
 
-                <!-- Page viewer: continuous vertical scroll of rendered pages -->
-                <ScrollViewer Grid.Column="0" x:Name="PageScroller" HorizontalScrollMode="Auto"
-                              HorizontalScrollBarVisibility="Auto" ZoomMode="Enabled"
-                              SizeChanged="OnViewerSizeChanged"
-                              Background="{ThemeResource LayerFillColorDefaultBrush}" Padding="16">
-                    <ItemsControl x:Name="PagesItems">
-                        <ItemsControl.ItemTemplate>
-                            <DataTemplate>
-                                <Border Margin="0,0,0,16" HorizontalAlignment="Center"
-                                        BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                                    <!-- Image + a draw surface on top for placing the signature box -->
-                                    <Grid Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}">
-                                        <Image Source="{Binding Image}" Stretch="Fill" />
-                                        <Canvas x:Name="DrawSurface" Background="Transparent"
-                                                PointerPressed="OnPagePointerPressed"
-                                                PointerMoved="OnPagePointerMoved"
-                                                PointerReleased="OnPagePointerReleased"
-                                                Tag="{Binding}">
-                                            <!-- The drawn signature box -->
-                                            <Border Canvas.Left="{Binding BoxX}" Canvas.Top="{Binding BoxY}"
-                                                    Width="{Binding BoxW}" Height="{Binding BoxH}"
-                                                    Visibility="{Binding BoxVisibility}"
-                                                    BorderThickness="2" BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
-                                                    Background="#330078D4" IsHitTestVisible="False">
-                                                <TextBlock Text="Signature" FontSize="11" Margin="4,2,0,0"
-                                                           Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
-                                            </Border>
-                                        </Canvas>
-                                    </Grid>
-                                </Border>
-                            </DataTemplate>
-                        </ItemsControl.ItemTemplate>
-                    </ItemsControl>
-                </ScrollViewer>
+                <!-- Left: page viewer OR empty-state drop zone -->
+                <Grid Grid.Column="0" Background="{ThemeResource LayerFillColorDefaultBrush}"
+                      AllowDrop="True" DragOver="OnViewerDragOver" Drop="OnViewerDrop">
+
+                    <!-- Page viewer: continuous vertical scroll of rendered pages -->
+                    <ScrollViewer x:Name="PageScroller" HorizontalScrollMode="Auto"
+                                  HorizontalScrollBarVisibility="Auto" ZoomMode="Enabled"
+                                  MinZoomFactor="1" MaxZoomFactor="4"
+                                  SizeChanged="OnViewerSizeChanged" Padding="16"
+                                  Visibility="{x:Bind ViewModel.PageViewerVisibility, Mode=OneWay}">
+                        <ItemsControl x:Name="PagesItems">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,16" HorizontalAlignment="Center"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                        <!-- Image + a draw surface on top for placing the signature box -->
+                                        <Grid Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}">
+                                            <Image Source="{Binding Image}" Stretch="Fill" />
+                                            <Canvas x:Name="DrawSurface" Background="Transparent"
+                                                    PointerPressed="OnPagePointerPressed"
+                                                    PointerMoved="OnPagePointerMoved"
+                                                    PointerReleased="OnPagePointerReleased"
+                                                    Tag="{Binding}">
+                                                <!-- The drawn signature box -->
+                                                <Border Canvas.Left="{Binding BoxX}" Canvas.Top="{Binding BoxY}"
+                                                        Width="{Binding BoxW}" Height="{Binding BoxH}"
+                                                        Visibility="{Binding BoxVisibility}"
+                                                        BorderThickness="2" BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                                                        Background="#330078D4" IsHitTestVisible="False">
+                                                    <TextBlock Text="Signature" FontSize="11" Margin="4,2,0,0"
+                                                               Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                                </Border>
+                                            </Canvas>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Zoom controls (1–4×) -->
+                    <StackPanel Orientation="Horizontal" Spacing="2"
+                                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,12,0"
+                                Padding="2" CornerRadius="6"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                                Visibility="{x:Bind ViewModel.PageViewerVisibility, Mode=OneWay}">
+                        <Button Click="OnZoomOut" ToolTipService.ToolTip="Zoom out"
+                                Background="Transparent" BorderThickness="0">
+                            <FontIcon Glyph="&#xE71F;" FontSize="14" />
+                        </Button>
+                        <Button Click="OnZoomReset" ToolTipService.ToolTip="Reset zoom"
+                                Background="Transparent" BorderThickness="0">
+                            <FontIcon Glyph="&#xE9A6;" FontSize="14" />
+                        </Button>
+                        <Button Click="OnZoomIn" ToolTipService.ToolTip="Zoom in"
+                                Background="Transparent" BorderThickness="0">
+                            <FontIcon Glyph="&#xE8A3;" FontSize="14" />
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Empty-state drop zone -->
+                    <Border Margin="24" CornerRadius="14" Padding="40"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                            BorderBrush="{ThemeResource AccentFillColorDefaultBrush}" BorderThickness="2"
+                            Visibility="{x:Bind ViewModel.DropZoneVisibility, Mode=OneWay}">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
+                            <FontIcon Glyph="&#xE7C3;" FontSize="48"
+                                      Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock Text="Drag a PDF here" Style="{StaticResource SubtitleTextBlockStyle}"
+                                       HorizontalAlignment="Center" />
+                            <Button Content="Open PDF" Click="OnOpenClicked"
+                                    Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
 
                 <!-- Right sidebar: certificate + signature options -->
                 <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
                         BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1,0,0,0">
-                    <Grid Padding="20" RowDefinitions="Auto,*,Auto">
+                    <Grid RowDefinitions="*,Auto">
+                        <ScrollViewer Grid.Row="0" Padding="20">
+                            <StackPanel Spacing="18">
 
-                        <!-- Top: certificate + toggles -->
-                        <StackPanel Grid.Row="0" Spacing="20">
+                                <StackPanel Spacing="8">
+                                    <TextBlock Text="Certificate" Style="{StaticResource SubtitleTextBlockStyle}" />
+                                    <ComboBox x:Name="CertCombo"
+                                              AutomationProperties.AutomationId="CertCombo"
+                                              HorizontalAlignment="Stretch"
+                                              PlaceholderText="Select a certificate"
+                                              DisplayMemberPath="CommonName"
+                                              ItemsSource="{x:Bind ViewModel.Identities, Mode=OneWay}"
+                                              SelectedItem="{x:Bind ViewModel.SelectedCert, Mode=TwoWay}" />
+                                    <TextBlock Text="{x:Bind ViewModel.CertDetailText, Mode=OneWay}"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
 
-                            <StackPanel Spacing="8">
-                                <TextBlock Text="Certificate" Style="{StaticResource SubtitleTextBlockStyle}" />
-                                <ComboBox x:Name="CertCombo"
-                                          AutomationProperties.AutomationId="CertCombo"
-                                          HorizontalAlignment="Stretch"
-                                          PlaceholderText="Select a certificate" />
-                                <TextBlock x:Name="CertDetailText"
-                                           Text="No certificate selected."
-                                           Style="{StaticResource CaptionTextBlockStyle}"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                           TextWrapping="Wrap" />
+                                <StackPanel Spacing="2">
+                                    <ToggleSwitch x:Name="VisibleSigToggle"
+                                                  x:Uid="VisibleSigToggle"
+                                                  AutomationProperties.AutomationId="VisibleSigToggle"
+                                                  Header="Visible signature"
+                                                  IsOn="{x:Bind ViewModel.VisibleSignature, Mode=TwoWay}"
+                                                  Toggled="OnVisibleToggled" />
+                                    <TextBlock Text="Draw a box on the page to place the signature."
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                    <ToggleSwitch Header="Sign all pages" Margin="0,6,0,0"
+                                                  AutomationProperties.AutomationId="SignAllToggle"
+                                                  IsOn="{x:Bind ViewModel.SignAllPages, Mode=TwoWay}"
+                                                  Visibility="{x:Bind ViewModel.SignAllVisibility, Mode=OneWay}" />
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <TextBox Header="Reason (optional)" PlaceholderText="e.g. I approve this document"
+                                             Text="{x:Bind ViewModel.Reason, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                    <TextBox Header="Location (optional)" PlaceholderText="e.g. Madrid, ES"
+                                             Text="{x:Bind ViewModel.Location, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <ToggleSwitch x:Name="TimestampToggle"
+                                                  AutomationProperties.AutomationId="TimestampToggle"
+                                                  Header="Timestamp (B-T)"
+                                                  IsOn="{x:Bind ViewModel.UseTimestamp, Mode=TwoWay}" />
+                                    <TextBlock Text="Add a trusted RFC 3161 timestamp (PAdES B-T)."
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                    <TextBox Header="TSA URL (RFC 3161)" Margin="0,4,0,0"
+                                             Text="{x:Bind ViewModel.TsaUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             Visibility="{x:Bind ViewModel.TsaVisibility, Mode=OneWay}" />
+                                </StackPanel>
+
                             </StackPanel>
-
-                            <StackPanel Spacing="2">
-                                <ToggleSwitch x:Name="VisibleSigToggle"
-                                              x:Uid="VisibleSigToggle"
-                                              AutomationProperties.AutomationId="VisibleSigToggle"
-                                              IsEnabled="False"
-                                              Toggled="OnVisibleToggled" />
-                                <TextBlock Text="Draw a box on the page to place the signature."
-                                           Style="{StaticResource CaptionTextBlockStyle}"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                           TextWrapping="Wrap" />
-                            </StackPanel>
-
-                            <StackPanel Spacing="2">
-                                <ToggleSwitch x:Name="TimestampToggle"
-                                              AutomationProperties.AutomationId="TimestampToggle"
-                                              Header="Timestamp (B-T)"
-                                              IsEnabled="False" />
-                                <TextBlock Text="Add a trusted RFC 3161 timestamp (PAdES B-T)."
-                                           Style="{StaticResource CaptionTextBlockStyle}"
-                                           Foreground="{ThemeResource TextFillColorSecondaryBrush}"
-                                           TextWrapping="Wrap" />
-                            </StackPanel>
-
-                        </StackPanel>
+                        </ScrollViewer>
 
                         <!-- Bottom: primary action -->
-                        <Button Grid.Row="2" x:Name="SignAndSaveButton"
-                                AutomationProperties.AutomationId="SignAndSaveButton"
-                                Content="Sign and save"
-                                Style="{StaticResource AccentButtonStyle}"
-                                HorizontalAlignment="Stretch"
-                                IsEnabled="False"
-                                Click="OnSignClicked" />
-
+                        <StackPanel Grid.Row="1" Padding="20" Spacing="8">
+                            <Button x:Name="SignAndSaveButton"
+                                    AutomationProperties.AutomationId="SignAndSaveButton"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    HorizontalAlignment="Stretch"
+                                    IsEnabled="{x:Bind ViewModel.CanSign, Mode=OneWay}"
+                                    Click="OnSignClicked">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <ProgressRing Width="16" Height="16"
+                                                  IsActive="{x:Bind ViewModel.IsSigning, Mode=OneWay}" />
+                                    <TextBlock Text="Sign and save" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
                     </Grid>
                 </Border>
             </Grid>

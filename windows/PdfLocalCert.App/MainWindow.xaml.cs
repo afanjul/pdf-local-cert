@@ -28,6 +28,23 @@ public sealed partial class MainWindow : Window
         ViewModel = new AppViewModel();   // must exist before x:Bind runs
         InitializeComponent();
         VersionText.Text = $"v{AppVersion}";
+        LoadIdentities();
+    }
+
+    /// <summary>Populate the certificate picker from the Windows store (mirrors the
+    /// macOS AppModel.loadIdentities; window-coupled so it lives here, not the VM).</summary>
+    private void LoadIdentities()
+    {
+        try
+        {
+            ViewModel.Identities.Clear();
+            foreach (var c in IdentityStore.LoadSigningIdentities()) ViewModel.Identities.Add(c);
+            ViewModel.SelectDefaultIdentity();
+        }
+        catch (Exception ex)
+        {
+            ViewModel.StatusText = $"Could not read the certificate store: {ex.Message}";
+        }
     }
 
     /// <summary>App version from the MSIX package identity (matches the installed build).</summary>
@@ -54,12 +71,43 @@ public sealed partial class MainWindow : Window
         _renderer.Reset();
         PagesItems.ItemsSource = null;
         ViewModel.ClearDocument();
+        ViewModel.VisibleSignature = false;
         NewButton.IsEnabled = false;
         VerifyButton.IsEnabled = false;
         SignButton.IsEnabled = false;
-        SignAndSaveButton.IsEnabled = false;
-        VisibleSigToggle.IsEnabled = false;
-        VisibleSigToggle.IsOn = false;
+    }
+
+    // ── Drag-and-drop a PDF onto the page area ───────────────────────────────
+
+    private void OnViewerDragOver(object sender, DragEventArgs e)
+    {
+        if (e.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems))
+        {
+            e.AcceptedOperation = Windows.ApplicationModel.DataTransfer.DataPackageOperation.Copy;
+            e.DragUIOverride.Caption = "Open PDF";
+        }
+    }
+
+    private async void OnViewerDrop(object sender, DragEventArgs e)
+    {
+        if (!e.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems)) return;
+        var items = await e.DataView.GetStorageItemsAsync();
+        var pdf = items.OfType<Windows.Storage.StorageFile>()
+                       .FirstOrDefault(f => f.FileType.Equals(".pdf", StringComparison.OrdinalIgnoreCase));
+        if (pdf is not null) await LoadAsync(pdf.Path);
+    }
+
+    // ── Zoom (1–4×) ──────────────────────────────────────────────────────────
+
+    private void OnZoomIn(object sender, RoutedEventArgs e) => Zoom(0.25f);
+    private void OnZoomOut(object sender, RoutedEventArgs e) => Zoom(-0.25f);
+    private void OnZoomReset(object sender, RoutedEventArgs e)
+        => PageScroller.ChangeView(null, null, 1f);
+
+    private void Zoom(float delta)
+    {
+        var z = Math.Clamp(PageScroller.ZoomFactor + delta, PageScroller.MinZoomFactor, PageScroller.MaxZoomFactor);
+        PageScroller.ChangeView(null, null, z);
     }
 
     private async void OnOpenClicked(object sender, RoutedEventArgs e)
@@ -90,8 +138,6 @@ public sealed partial class MainWindow : Window
             NewButton.IsEnabled = true;
             VerifyButton.IsEnabled = true;
             SignButton.IsEnabled = true;
-            SignAndSaveButton.IsEnabled = true;
-            VisibleSigToggle.IsEnabled = true;
             ViewModel.StatusText = $"{System.IO.Path.GetFileName(path)} — {pages.Count} page(s)";
         }
         catch (Exception ex)
@@ -120,6 +166,13 @@ public sealed partial class MainWindow : Window
     {
         if (_renderer.FilePath is null) return;
 
+        // Certificate is chosen in the sidebar (mirrors macOS — no separate dialog).
+        if (ViewModel.SelectedCert is not { CanSign: true, IsExpired: false } cert)
+        {
+            await ShowDialog("Sign", "Select a valid signing certificate in the sidebar first.");
+            return;
+        }
+
         // Free-tier gate: block when the monthly quota is exhausted (Pro is unlimited).
         if (!ViewModel.License.IsPro && ViewModel.License.RemainingFreeSigns <= 0)
         {
@@ -127,33 +180,21 @@ public sealed partial class MainWindow : Window
             return;
         }
 
-        List<CertificateInfo> identities;
-        try
-        {
-            identities = IdentityStore.LoadSigningIdentities();
-        }
-        catch (Exception ex)
-        {
-            await ShowDialog("Sign", $"Could not read the certificate store: {ex.Message}");
-            return;
-        }
-        if (identities.Count == 0)
-        {
-            await ShowDialog("Sign", "No signing certificates found in your personal store (Certificates - Current User \\ Personal). Import your certificate and try again.");
-            return;
-        }
-
-        var dialog = new SignDialog(identities) { XamlRoot = Content.XamlRoot };
-        if (await dialog.ShowAsync() != ContentDialogResult.Primary) return;
-        if (dialog.SelectedCert is not { } cert) return;
-
-        // Collect the drawn placement(s). Visible signature on + a box drawn =>
-        // visible placement; otherwise an invisible whole-document signature.
+        // Collect placement(s) for a visible signature; empty => invisible signature.
         var placements = new List<PlacementSpec>();
-        if (VisibleSigToggle.IsOn && PagesItems.ItemsSource is IEnumerable<RenderedPage> pages)
+        if (ViewModel.VisibleSignature && PagesItems.ItemsSource is IReadOnlyList<RenderedPage> pages)
         {
             var lines = new List<string> { $"Firmado por: {cert.CommonName}" };
-            if (!string.IsNullOrWhiteSpace(dialog.Reason)) lines.Add(dialog.Reason!);
+            if (!string.IsNullOrWhiteSpace(ViewModel.Reason)) lines.Add(ViewModel.Reason);
+
+            // "Sign all pages": replicate the single drawn box's page-relative
+            // fractions onto every page before building the specs.
+            if (ViewModel.SignAllPages &&
+                pages.FirstOrDefault(p => p.NormalizedBox is not null)?.NormalizedBox is { } n)
+            {
+                foreach (var p in pages) p.SetNormalizedBox(n.X, n.Y, n.W, n.H);
+            }
+
             foreach (var p in pages)
             {
                 var spec = p.ToPlacement(lines);
@@ -166,6 +207,7 @@ public sealed partial class MainWindow : Window
             }
         }
 
+        ViewModel.IsSigning = true;
         ViewModel.StatusText = "Signing…";
         try
         {
@@ -174,9 +216,9 @@ public sealed partial class MainWindow : Window
                 PdfPath = _renderer.FilePath,
                 Cert = cert,
                 Placements = placements,
-                Reason = dialog.Reason,
-                Location = dialog.Location,
-                TsaUrl = dialog.TsaUrl,
+                Reason = string.IsNullOrWhiteSpace(ViewModel.Reason) ? null : ViewModel.Reason,
+                Location = string.IsNullOrWhiteSpace(ViewModel.Location) ? null : ViewModel.Location,
+                TsaUrl = ViewModel.UseTimestamp && !string.IsNullOrWhiteSpace(ViewModel.TsaUrl) ? ViewModel.TsaUrl : null,
             };
             var result = await Task.Run(() => new SigningService().Sign(req));
             ViewModel.License.RecordSign(); // count against the free monthly quota (no-op for Pro)
@@ -220,6 +262,10 @@ public sealed partial class MainWindow : Window
         {
             ViewModel.StatusText = "Sign failed";
             await ShowDialog("Sign failed", ex.Message);
+        }
+        finally
+        {
+            ViewModel.IsSigning = false;
         }
     }
 

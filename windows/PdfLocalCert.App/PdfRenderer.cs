@@ -163,6 +163,19 @@ public sealed class RenderedPage : INotifyPropertyChanged
 
     public void ClearBox() => HasBox = false;
 
+    /// <summary>The drawn box as page-relative fractions (0..1), or null if none.</summary>
+    public (double X, double Y, double W, double H)? NormalizedBox
+        => _hasBox ? (_nx, _ny, _nw, _nh) : null;
+
+    /// <summary>Set the box directly from page-relative fractions (used to replicate
+    /// one drawn box onto every page for "sign all pages").</summary>
+    public void SetNormalizedBox(double nx, double ny, double nw, double nh)
+    {
+        _nx = nx; _ny = ny; _nw = nw; _nh = nh;
+        HasBox = true;
+        RaiseBox();
+    }
+
     /// <summary>
     /// Convert the drawn box into a PDF user-space placement via the shared
     /// CoordinateMapper -- the same tested math the macOS shell uses. The box is

@@ -78,11 +78,22 @@ public sealed partial class AppViewModel : ObservableObject
 
     // ── Signing options ──────────────────────────────────────────────────────
 
-    [ObservableProperty] private bool _visibleSignature;
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(SignAllVisibility))]
+    private bool _visibleSignature;
+
     [ObservableProperty] private bool _signAllPages;
-    [ObservableProperty] private bool _useTimestamp;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(TsaVisibility))]
+    private bool _useTimestamp;
+
     [ObservableProperty] private string _reason = "";
     [ObservableProperty] private string _location = "";
+
+    /// <summary>"Sign all pages" only applies to a visible (placed) signature.</summary>
+    public Visibility SignAllVisibility => VisibleSignature ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility TsaVisibility => UseTimestamp ? Visibility.Visible : Visibility.Collapsed;
 
     /// <summary>
     /// Qualified Spanish/EU TSA (ACCV, on the EU Trusted List) so timestamped

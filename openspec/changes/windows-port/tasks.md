@@ -78,11 +78,11 @@ same sections, same options, same sign/verify/batch processes. Decisions:
 
 ### 7.1 Sign tab parity
 
-- [ ] 7.1.1 Empty-state drop zone (dashed target, icon, prompt, Open button) with file drag-drop onto the window; "New" (clear document) command mirroring macOS
-- [ ] 7.1.2 Sidebar layout to match macOS: certificate picker + cert detail (issuer, validity, expired in red, non-signing-usage warning), visible-signature toggle + help text, timestamp toggle + TSA URL, inline Sign-and-save button with progress + inline status/error
-- [ ] 7.1.3 Default the TSA URL to the qualified ACCV endpoint (`http://tss.accv.es:8318/tsa`) to match macOS (VALIDe-valid B-T), not DigiCert
-- [ ] 7.1.4 `signAllPages` toggle (replicate the drawn box on every page) shown when visible signature is on
-- [ ] 7.1.5 Zoom controls (1–4×, reset) over the page view, placement stays normalized
+- [x] 7.1.1 Empty-state drop zone (dashed target, icon, prompt, Open button) with file drag-drop onto the window; "New" (clear document) command mirroring macOS
+- [x] 7.1.2 Sidebar layout to match macOS: certificate picker + cert detail (issuer, validity, expired in red, non-signing-usage warning), visible-signature toggle + help text, timestamp toggle + TSA URL, inline Sign-and-save button with progress + inline status/error
+- [x] 7.1.3 Default the TSA URL to the qualified ACCV endpoint (`http://tss.accv.es:8318/tsa`) to match macOS (VALIDe-valid B-T), not DigiCert
+- [x] 7.1.4 `signAllPages` toggle (replicate the drawn box on every page) shown when visible signature is on
+- [x] 7.1.5 Zoom controls (1–4×, reset) over the page view, placement stays normalized
 
 ### 7.2 Visible-signature appearance editor (text-only first)
 
