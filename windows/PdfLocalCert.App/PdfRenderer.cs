@@ -34,7 +34,14 @@ public sealed class PdfRenderer
     {
         if (Document is null) throw new InvalidOperationException("no document loaded");
         using var page = Document.GetPage(index);
-        var size = page.Size; // points (1/72 inch)
+        // Windows.Data.Pdf reports Size in DIPs (1/96"), NOT PDF points (1/72").
+        // The PAdES /Rect lives in PDF user-space points, and CoordinateMapper works
+        // in points, so convert DIPs -> points (×72/96) for the page's intrinsic size.
+        // Skipping this scaled every placement by 96/72 (≈1.333) — boxes landed too big.
+        var size = page.Size; // DIPs (1/96 inch)
+        const double DipToPoint = 72.0 / 96.0;
+        var pointW = size.Width * DipToPoint;
+        var pointH = size.Height * DipToPoint;
 
         using var stream = new InMemoryRandomAccessStream();
         var pxW = (uint)Math.Round(size.Width * scale);
@@ -49,7 +56,7 @@ public sealed class PdfRenderer
         // Windows.Data.Pdf bakes /Rotate into the rendered bitmap, so the image is
         // upright and Size is the displayed size. The mapper therefore uses
         // rotation 0 against a cropBox of the displayed point size.
-        return new RenderedPage(bmp, index, size.Width, size.Height, pxW, pxH);
+        return new RenderedPage(bmp, index, pointW, pointH, pxW, pxH);
     }
 
     public async Task<List<RenderedPage>> RenderAllAsync(double scale = RenderScale)
@@ -89,8 +96,16 @@ public sealed class RenderedPage : INotifyPropertyChanged
     // Fit-to-width display size (DIPs). The bitmap is rendered larger; the Image
     // scales uniformly to this size, and the draw surface adopts it too.
     private double _displayWidth, _displayHeight;
-    public double DisplayWidth { get => _displayWidth; private set { _displayWidth = value; Raise(nameof(DisplayWidth)); } }
-    public double DisplayHeight { get => _displayHeight; private set { _displayHeight = value; Raise(nameof(DisplayHeight)); } }
+    public double DisplayWidth
+    {
+        get => _displayWidth;
+        private set { _displayWidth = value; Raise(nameof(DisplayWidth)); RaiseBox(); }
+    }
+    public double DisplayHeight
+    {
+        get => _displayHeight;
+        private set { _displayHeight = value; Raise(nameof(DisplayHeight)); RaiseBox(); }
+    }
 
     /// <summary>Size the page to fill the given width, preserving aspect ratio.</summary>
     public void FitToWidth(double availableWidth)
@@ -100,9 +115,12 @@ public sealed class RenderedPage : INotifyPropertyChanged
         DisplayHeight = availableWidth * PointHeight / PointWidth;
     }
 
-    // Drawn box in display pixels (same space as the rendered bitmap).
-    private double _boxX, _boxY, _boxW, _boxH;
-    private double _surfaceW, _surfaceH;
+    // Drawn box stored as normalized fractions (0..1) of the displayed page, so it
+    // sticks to the paper and rescales with the page when the window resizes (the
+    // macOS shell gets this for free from PDFView; here we keep the page-relative
+    // model explicitly). The on-screen BoxX/Y/W/H are derived from these fractions
+    // against the current display size, so what's drawn always equals what's signed.
+    private double _nx, _ny, _nw, _nh;
     private bool _hasBox;
 
     public bool HasBox
@@ -114,41 +132,44 @@ public sealed class RenderedPage : INotifyPropertyChanged
     /// <summary>For XAML binding: Visible when a box exists, else Collapsed.</summary>
     public Visibility BoxVisibility => _hasBox ? Visibility.Visible : Visibility.Collapsed;
 
-    public double BoxX { get => _boxX; private set { _boxX = value; Raise(nameof(BoxX)); } }
-    public double BoxY { get => _boxY; private set { _boxY = value; Raise(nameof(BoxY)); } }
-    public double BoxW { get => _boxW; private set { _boxW = value; Raise(nameof(BoxW)); } }
-    public double BoxH { get => _boxH; private set { _boxH = value; Raise(nameof(BoxH)); } }
+    // Display-space box (DIPs), derived from the normalized fractions on the fly.
+    public double BoxX => _nx * _displayWidth;
+    public double BoxY => _ny * _displayHeight;
+    public double BoxW => _nw * _displayWidth;
+    public double BoxH => _nh * _displayHeight;
 
-    // Draw-surface size the box was captured against (TEMP, for placement diagnostics).
-    public double SurfaceW => _surfaceW;
-    public double SurfaceH => _surfaceH;
+    private void RaiseBox()
+    {
+        Raise(nameof(BoxX)); Raise(nameof(BoxY)); Raise(nameof(BoxW)); Raise(nameof(BoxH));
+    }
 
-    /// <summary>Set the drawn box and the size of the draw surface it was drawn on
-    /// (both in the same on-screen coordinate space).</summary>
+    /// <summary>Set the drawn box from a rect in the draw surface's coordinate space,
+    /// converting to page-relative fractions (0..1) immediately.</summary>
     public void SetBox(double x, double y, double w, double h, double surfaceW, double surfaceH)
     {
-        BoxX = x; BoxY = y; BoxW = w; BoxH = h;
-        _surfaceW = surfaceW; _surfaceH = surfaceH;
+        if (surfaceW <= 0 || surfaceH <= 0) return;
+        _nx = x / surfaceW; _ny = y / surfaceH;
+        _nw = w / surfaceW; _nh = h / surfaceH;
         HasBox = true;
+        RaiseBox();
     }
 
     public void ClearBox() => HasBox = false;
 
     /// <summary>
     /// Convert the drawn box into a PDF user-space placement via the shared
-    /// CoordinateMapper -- the same tested math the macOS shell uses. Returns null
-    /// if no box is drawn.
+    /// CoordinateMapper -- the same tested math the macOS shell uses. The box is
+    /// already normalized (0..1 of the displayed page), which is exactly the
+    /// normalized space CoordinateMapper.UserSpaceRect consumes. Returns null if
+    /// no box is drawn.
     /// </summary>
     public PlacementSpec? ToPlacement(IReadOnlyList<string> lines)
     {
-        if (!_hasBox || _surfaceW <= 0 || _surfaceH <= 0) return null;
+        if (!_hasBox) return null;
 
         // Upright render => rotation 0, cropBox is the displayed point size.
         var mapper = new CoordinateMapper(new PdfRect(0, 0, PointWidth, PointHeight), 0);
-        var surface = new PdfRect(0, 0, _surfaceW, _surfaceH);
-        var viewRect = new PdfRect(_boxX, _boxY, _boxW, _boxH);
-        var normalized = mapper.Normalize(viewRect, surface);
-        var user = mapper.UserSpaceRect(normalized);
+        var user = mapper.UserSpaceRect(new PdfRect(_nx, _ny, _nw, _nh));
 
         return new PlacementSpec
         {

@@ -54,6 +54,18 @@ def main() -> None:
         y += 50
     g.append("ET")
 
+    # mini-label at every 50 pt intersection: "x,y" just above-right of the cross,
+    # so a placed box can be read off the nearest crosses directly.
+    g.append("0.25 0.35 0.8 rg BT /F1 4 Tf")
+    x = 50.0
+    while x < W:
+        y = 50.0
+        while y < H:
+            g.append(f"1 0 0 1 {x+1.5:.2f} {y+1.5:.2f} Tm ({int(x)},{int(y)}) Tj")
+            y += 50
+        x += 50
+    g.append("ET")
+
     # corner + centre markers with origin note
     g.append("1 0 0 rg BT /F1 9 Tf")
     g.append(f"1 0 0 1 6 {H-14:.2f} Tm (TOP-LEFT  \\(x=0, y={H:.0f}\\)) Tj")

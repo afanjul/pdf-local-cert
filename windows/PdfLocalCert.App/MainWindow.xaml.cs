@@ -283,12 +283,7 @@ public sealed partial class MainWindow : Window
         }
         else
         {
-            // TEMP placement diagnostics: surface (canvas) size, drawn box in px, and the
-            // mapped PDF user-space rect. Lets us read drawn-vs-landed coords directly.
-            var spec = _activePage.ToPlacement(new[] { "x" });
-            var dbg = spec is null ? "" :
-                $"  [surf {_activePage.SurfaceW:F0}x{_activePage.SurfaceH:F0} | box {_activePage.BoxX:F0},{_activePage.BoxY:F0} {_activePage.BoxW:F0}x{_activePage.BoxH:F0} | pt {spec.X:F0},{spec.Y:F0} {spec.W:F0}x{spec.H:F0}]";
-            StatusText.Text = $"Signature box placed on page {_activePage.Index + 1}. Click Sign to apply.{dbg}";
+            StatusText.Text = $"Signature box placed on page {_activePage.Index + 1}. Click Sign to apply.";
         }
         _activeCanvas = null;
         _activePage = null;
