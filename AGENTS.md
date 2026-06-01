@@ -84,10 +84,14 @@ Two publish layouts — **the `WindowsPackageType` flag is opposite for each, do
 - **Loose dev .exe** (fast inner loop, no install):
   ```powershell
   # winvm has only Windows PowerShell (no pwsh) — invoke the script with &, not pwsh:
-  & windows\scripts\publish-loose.ps1 -Rid win-arm64    # win-x64 default
+  & windows\scripts\publish-loose.ps1          # win-x64; x64-on-ARM emulation on winvm
   ```
-  Publishes `WindowsPackageType=None`; the WinAppSDK bootstrapper resolves the runtime
-  at launch so the `.exe` runs directly from the publish folder.
+  Publishes `WindowsPackageType=None` + `WindowsAppSDKSelfContained=true`. The
+  self-contained flag is required: a framework-dependent unpackaged build runs the
+  WinAppSDK DeploymentManager auto-initializer at startup and crashes here with
+  `REGDB_E_CLASSNOTREG` before any window. Self-contained bundles the runtime in-folder
+  and removes the auto-init. **x64 only** — we do not build arm64 (it ran fine under
+  x64 emulation; arm64 was a wrong turn).
 
 - **MSIX package** (ship/install test):
   ```powershell

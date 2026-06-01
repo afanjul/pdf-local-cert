@@ -3,10 +3,20 @@
   Dev loop: publish the WinUI app as a loose, runnable .exe (no MSIX pack/install).
 
 .DESCRIPTION
-  Publishes self-contained with WindowsPackageType=None -- the loose/dev layout whose
-  WinAppSDK bootstrapper locates the runtime at launch, so the .exe runs directly from
-  the publish folder with no install. This is the fast inner loop for iterating on app
-  behaviour (e.g. the signature placement work): edit -> publish -> run the .exe.
+  Publishes a loose, install-free .exe for the fast inner loop (edit -> publish -> run):
+    WindowsPackageType=None          unpackaged desktop app
+    WindowsAppSDKSelfContained=true  bundle the WinAppSDK runtime INTO the publish
+                                     folder
+
+  WindowsAppSDKSelfContained=true is load-bearing. Without it the unpackaged app is
+  framework-dependent and runs the WinAppSDK DeploymentManager auto-initializer at
+  startup, which WinRT-activates a class that is not registered for an unpackaged
+  process here (x64-on-ARM emulation, no registered DDLM) and crashes before any
+  window with:
+    TypeInitializationException -> COMException 0x80040154 REGDB_E_CLASSNOTREG
+    at WindowsAppRuntime.DeploymentManagerCS.AutoInitialize
+  Self-contained removes the auto-initializer entirely (the runtime ships in-folder),
+  so the .exe launches with no installed runtime and no deployment step.
 
   NOTE the asymmetry with pack-msix.ps1: a loose payload uses WindowsPackageType=None,
   but an MSIX payload MUST use WindowsPackageType=MSIX (a packaged app gets its runtime
@@ -41,7 +51,8 @@ $publishArgs = @(
     "-c", "Release",
     "-r", $Rid,
     "--self-contained", "true",
-    "-p:WindowsPackageType=None"
+    "-p:WindowsPackageType=None",
+    "-p:WindowsAppSDKSelfContained=true"
 )
 if ($OutDir) { $publishArgs += @("-o", $OutDir) }
 
