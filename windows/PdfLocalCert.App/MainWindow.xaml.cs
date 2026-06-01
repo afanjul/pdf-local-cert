@@ -11,6 +11,7 @@ namespace PdfLocalCert.App;
 public sealed partial class MainWindow : Window
 {
     private readonly PdfRenderer _renderer = new();
+    private readonly LicenseManager _license = new();
 
     // Signature-box drag state.
     private bool _drawing;
@@ -76,6 +77,13 @@ public sealed partial class MainWindow : Window
     {
         if (_renderer.FilePath is null) return;
 
+        // Free-tier gate: block when the monthly quota is exhausted (Pro is unlimited).
+        if (!_license.IsPro && _license.RemainingFreeSigns <= 0)
+        {
+            await ShowPaywall($"You have used all {LicenseManager.FreeMonthlyLimit} free signatures this month.");
+            return;
+        }
+
         List<CertificateInfo> identities;
         try
         {
@@ -128,6 +136,7 @@ public sealed partial class MainWindow : Window
                 TsaUrl = dialog.TsaUrl,
             };
             var result = await Task.Run(() => new SigningService().Sign(req));
+            _license.RecordSign(); // count against the free monthly quota (no-op for Pro)
             StatusText.Text = $"Signed ({result.PadesLevel}). Choose where to save…";
 
             // Let the user save the signed PDF wherever they want.
@@ -263,6 +272,18 @@ public sealed partial class MainWindow : Window
         }
         _activeCanvas = null;
         _activePage = null;
+    }
+
+    private async void OnSettingsClicked(object sender, RoutedEventArgs e)
+    {
+        var dialog = new SettingsDialog(_license) { XamlRoot = Content.XamlRoot };
+        await dialog.ShowAsync();
+    }
+
+    private async Task ShowPaywall(string reason)
+    {
+        var dialog = new SettingsDialog(_license, paywallReason: reason) { XamlRoot = Content.XamlRoot };
+        await dialog.ShowAsync();
     }
 
     private void OnPingClicked(object sender, RoutedEventArgs e)

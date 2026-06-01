@@ -18,6 +18,7 @@
             <AppBarButton x:Name="VerifyButton" Icon="Permissions" Label="Verify" Click="OnVerifyClicked" IsEnabled="False" />
             <AppBarSeparator />
             <AppBarButton x:Name="PingButton" Icon="Sync" Label="Ping core" Click="OnPingClicked" />
+            <AppBarButton x:Name="SettingsButton" Icon="Setting" Label="Settings" Click="OnSettingsClicked" />
         </CommandBar>
 
         <!-- Page viewer: continuous vertical scroll of rendered pages -->

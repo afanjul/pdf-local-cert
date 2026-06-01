@@ -1,0 +1,54 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ContentDialog
+    x:Class="PdfLocalCert.App.SettingsDialog"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
+    Title="Settings"
+    CloseButtonText="Close"
+    DefaultButton="Close">
+
+    <ScrollViewer>
+        <StackPanel Spacing="16" MinWidth="380">
+
+            <muxc:InfoBar x:Name="PaywallBar" IsOpen="False" Severity="Warning" IsClosable="False" />
+
+            <!-- License / tier -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="License" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <TextBlock x:Name="TierText" Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+
+                <StackPanel x:Name="ActivatePanel" Spacing="8">
+                    <TextBox x:Name="LicenseBox" PlaceholderText="PDFS-XXXX-XXXX-XXXX"
+                             Header="Enter a license key to unlock Pro" />
+                    <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Button x:Name="ActivateButton" Content="Activate" Click="OnActivate" />
+                        <TextBlock x:Name="ActivateError" Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                   VerticalAlignment="Center" Visibility="Collapsed" />
+                    </StackPanel>
+                </StackPanel>
+
+                <Button x:Name="DeactivateButton" Content="Deactivate Pro" Click="OnDeactivate"
+                        Visibility="Collapsed" />
+            </StackPanel>
+
+            <!-- Output filename suffix -->
+            <StackPanel Spacing="4">
+                <TextBlock Text="Signed file name suffix" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <TextBox x:Name="SuffixBox" PlaceholderText="-firmado" />
+                <TextBlock Text="Appended to the default save name: name + suffix + .pdf"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </StackPanel>
+
+            <!-- About -->
+            <StackPanel Spacing="2">
+                <TextBlock Text="About" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <TextBlock Text="PDF Local Cert for Windows" Style="{StaticResource CaptionTextBlockStyle}" />
+                <TextBlock x:Name="AboutText" Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+            </StackPanel>
+        </StackPanel>
+    </ScrollViewer>
+</ContentDialog>
