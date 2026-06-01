@@ -183,7 +183,8 @@ public sealed class RenderedPage : INotifyPropertyChanged
     /// normalized space CoordinateMapper.UserSpaceRect consumes. Returns null if
     /// no box is drawn.
     /// </summary>
-    public PlacementSpec? ToPlacement(IReadOnlyList<string> lines)
+    public PlacementSpec? ToPlacement(IReadOnlyList<string> lines, double fontSize, bool wrap,
+                                      bool border, bool background)
     {
         if (!_hasBox) return null;
 
@@ -196,8 +197,10 @@ public sealed class RenderedPage : INotifyPropertyChanged
             Page = (int)Index,
             X = user.X, Y = user.Y, W = user.Width, H = user.Height,
             Lines = lines,
-            Border = true,
-            Background = true,
+            FontSize = fontSize,
+            Wrap = wrap,
+            Border = border,
+            Background = background,
         };
     }
 

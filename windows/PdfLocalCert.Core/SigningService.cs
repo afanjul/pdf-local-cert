@@ -21,15 +21,40 @@ public sealed class SigningService
 
         // ── prepare ──
         var placements = new List<object>();
-        foreach (var p in req.Placements)
+        for (int i = 0; i < req.Placements.Count; i++)
         {
-            placements.Add(new Dictionary<string, object>
+            var p = req.Placements[i];
+            var dict = new Dictionary<string, object>
             {
                 ["page"] = p.Page, ["x"] = p.X, ["y"] = p.Y, ["w"] = p.W, ["h"] = p.H,
                 ["lines"] = p.Lines,
+                ["text_x"] = p.TextX,
+                ["text_w"] = p.TextW,
+                ["font_size"] = p.FontSize,
+                ["wrap"] = p.Wrap,
                 ["border"] = p.Border,
                 ["background"] = p.Background,
-            });
+            };
+            // Opaque images (logo / QR): write each RGBA buffer to the work dir and
+            // reference it by path (mirrors the core's PlacedImage contract).
+            if (p.Images.Count > 0)
+            {
+                var imgs = new List<object>();
+                for (int j = 0; j < p.Images.Count; j++)
+                {
+                    var im = p.Images[j];
+                    var imgPath = Path.Combine(workDir, $"placed-{i}-{j}.rgba");
+                    File.WriteAllBytes(imgPath, im.Rgba);
+                    imgs.Add(new Dictionary<string, object>
+                    {
+                        ["rgba_path"] = imgPath,
+                        ["width"] = im.PxW, ["height"] = im.PxH,
+                        ["x"] = im.X, ["y"] = im.Y, ["w"] = im.W, ["h"] = im.H,
+                    });
+                }
+                dict["images"] = imgs;
+            }
+            placements.Add(dict);
         }
         var prepareReq = new Dictionary<string, object>
         {

@@ -86,9 +86,9 @@ same sections, same options, same sign/verify/batch processes. Decisions:
 
 ### 7.2 Visible-signature appearance editor (text-only first)
 
-- [ ] 7.2.1 `Expander`-based single-open accordions — Content (name, label + custom label, date, reason, location), Style (border, transparent background, wrap text, font-size slider 6–16)
-- [ ] 7.2.2 Live appearance preview pane that renders the same layout the core will embed (reuse the shared layout math); update on every option change
-- [ ] 7.2.3 Presets bar: save / apply / delete named `AppearanceConfig` (persist via `ApplicationData.LocalSettings`/JSON), mirroring macOS `PresetStore`
+- [x] 7.2.1 `Expander`-based single-open accordions — Content (name, label + custom label, date, reason, location), Style (border, transparent background, wrap text, font-size slider 6–16)
+- [x] 7.2.2 Live appearance preview pane that renders the same layout the core will embed (reuse the shared layout math); update on every option change
+- [x] 7.2.3 Presets bar: save / apply / delete named `AppearanceConfig` (persist via `ApplicationData.LocalSettings`/JSON), mirroring macOS `PresetStore`
 
 ### 7.3 Batch tab
 

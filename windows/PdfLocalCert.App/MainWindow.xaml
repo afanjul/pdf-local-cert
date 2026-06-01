@@ -151,11 +151,70 @@
                                                   Visibility="{x:Bind ViewModel.SignAllVisibility, Mode=OneWay}" />
                                 </StackPanel>
 
-                                <StackPanel Spacing="6">
-                                    <TextBox Header="Reason (optional)" PlaceholderText="e.g. I approve this document"
-                                             Text="{x:Bind ViewModel.Reason, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
-                                    <TextBox Header="Location (optional)" PlaceholderText="e.g. Madrid, ES"
-                                             Text="{x:Bind ViewModel.Location, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                <!-- Appearance editor (visible signature only) -->
+                                <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.AppearanceVisibility, Mode=OneWay}">
+                                    <TextBlock Text="Appearance" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                                    <!-- Live preview (approximate; bitmap-exact preview arrives in 7.7) -->
+                                    <Border CornerRadius="6" MinHeight="56" Padding="8"
+                                            Background="{x:Bind ViewModel.PreviewBackgroundBrush, Mode=OneWay}"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                        <ItemsControl ItemsSource="{x:Bind ViewModel.PreviewLines, Mode=OneWay}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="x:String">
+                                                    <TextBlock Text="{x:Bind}" FontSize="12" Foreground="Black" TextWrapping="Wrap" />
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </Border>
+
+                                    <!-- Content -->
+                                    <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                              Header="Content">
+                                        <StackPanel Spacing="6">
+                                            <CheckBox Content="Name" IsChecked="{x:Bind ViewModel.ShowName, Mode=TwoWay}" />
+                                            <CheckBox Content="Label" Margin="20,0,0,0"
+                                                      Visibility="{x:Bind ViewModel.LabelToggleVisibility, Mode=OneWay}"
+                                                      IsChecked="{x:Bind ViewModel.ShowLabel, Mode=TwoWay}" />
+                                            <TextBox Margin="20,0,0,0" PlaceholderText="Firmado por:"
+                                                     Visibility="{x:Bind ViewModel.CustomLabelVisibility, Mode=OneWay}"
+                                                     Text="{x:Bind ViewModel.CustomLabel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            <CheckBox Content="Date" IsChecked="{x:Bind ViewModel.ShowDate, Mode=TwoWay}" />
+                                            <CheckBox Content="Reason" IsChecked="{x:Bind ViewModel.ShowReason, Mode=TwoWay}" />
+                                            <TextBox Margin="20,0,0,0" PlaceholderText="e.g. I approve this document"
+                                                     Visibility="{x:Bind ViewModel.ReasonFieldVisibility, Mode=OneWay}"
+                                                     Text="{x:Bind ViewModel.Reason, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            <CheckBox Content="Location" IsChecked="{x:Bind ViewModel.ShowLocation, Mode=TwoWay}" />
+                                            <TextBox Margin="20,0,0,0" PlaceholderText="e.g. Madrid, ES"
+                                                     Visibility="{x:Bind ViewModel.LocationFieldVisibility, Mode=OneWay}"
+                                                     Text="{x:Bind ViewModel.Location, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+                                    </Expander>
+
+                                    <!-- Style -->
+                                    <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                              Header="Style">
+                                        <StackPanel Spacing="6">
+                                            <CheckBox Content="Border" IsChecked="{x:Bind ViewModel.ShowBorder, Mode=TwoWay}" />
+                                            <CheckBox Content="Transparent background" IsChecked="{x:Bind ViewModel.TransparentBackground, Mode=TwoWay}" />
+                                            <CheckBox Content="Wrap text" IsChecked="{x:Bind ViewModel.WrapText, Mode=TwoWay}" />
+                                            <TextBlock Text="Text size" Style="{StaticResource CaptionTextBlockStyle}" />
+                                            <Slider Minimum="6" Maximum="16" StepFrequency="1"
+                                                    Value="{x:Bind ViewModel.FontSize, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Expander>
+
+                                    <!-- Presets -->
+                                    <StackPanel Spacing="6">
+                                        <TextBlock Text="Presets" Style="{StaticResource CaptionTextBlockStyle}" />
+                                        <ComboBox HorizontalAlignment="Stretch" PlaceholderText="Saved appearances"
+                                                  ItemsSource="{x:Bind ViewModel.Presets, Mode=OneWay}"
+                                                  SelectedItem="{x:Bind ViewModel.SelectedPreset, Mode=TwoWay}" />
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Button Content="Save…" Click="OnSavePreset" />
+                                            <Button Content="Delete" Click="OnDeletePreset" />
+                                        </StackPanel>
+                                    </StackPanel>
                                 </StackPanel>
 
                                 <StackPanel Spacing="6">

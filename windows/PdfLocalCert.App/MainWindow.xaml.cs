@@ -110,6 +110,26 @@ public sealed partial class MainWindow : Window
         PageScroller.ChangeView(null, null, z);
     }
 
+    // ── Appearance presets ───────────────────────────────────────────────────
+
+    private async void OnSavePreset(object sender, RoutedEventArgs e)
+    {
+        var input = new TextBox { PlaceholderText = "Preset name", Text = ViewModel.SelectedPreset?.Name ?? "" };
+        var dlg = new ContentDialog
+        {
+            Title = "Save appearance preset",
+            Content = input,
+            PrimaryButtonText = "Save",
+            CloseButtonText = "Cancel",
+            DefaultButton = ContentDialogButton.Primary,
+            XamlRoot = Content.XamlRoot,
+        };
+        if (await dlg.ShowAsync() == ContentDialogResult.Primary && !string.IsNullOrWhiteSpace(input.Text))
+            ViewModel.SavePreset(input.Text);
+    }
+
+    private void OnDeletePreset(object sender, RoutedEventArgs e) => ViewModel.DeleteSelectedPreset();
+
     private async void OnOpenClicked(object sender, RoutedEventArgs e)
     {
         // Unpackaged WinUI: pickers must be associated with the window's HWND.
@@ -184,8 +204,7 @@ public sealed partial class MainWindow : Window
         var placements = new List<PlacementSpec>();
         if (ViewModel.VisibleSignature && PagesItems.ItemsSource is IReadOnlyList<RenderedPage> pages)
         {
-            var lines = new List<string> { $"Firmado por: {cert.CommonName}" };
-            if (!string.IsNullOrWhiteSpace(ViewModel.Reason)) lines.Add(ViewModel.Reason);
+            var lines = ViewModel.BuildLines(cert.CommonName);
 
             // "Sign all pages": replicate the single drawn box's page-relative
             // fractions onto every page before building the specs.
@@ -197,7 +216,8 @@ public sealed partial class MainWindow : Window
 
             foreach (var p in pages)
             {
-                var spec = p.ToPlacement(lines);
+                var spec = p.ToPlacement(lines, ViewModel.FontSize, ViewModel.WrapText,
+                                         ViewModel.ShowBorder, !ViewModel.TransparentBackground);
                 if (spec is not null) placements.Add(spec);
             }
             if (placements.Count == 0)

@@ -31,6 +31,31 @@ public sealed class PlacementSpec
     public IReadOnlyList<string> Lines { get; init; } = Array.Empty<string>();
     public bool Border { get; init; }
     public bool Background { get; init; }
+
+    /// <summary>Text size in points (0 = core default, 9).</summary>
+    public double FontSize { get; init; }
+    /// <summary>Word-wrap long lines instead of truncating with "…".</summary>
+    public bool Wrap { get; init; }
+    /// <summary>Box-local x where text starts (0 = core default, 2). Reserves room for a left logo.</summary>
+    public double TextX { get; init; }
+    /// <summary>Box-local width available to text (0 = auto). Reserves room for a right QR badge.</summary>
+    public double TextW { get; init; }
+    /// <summary>Opaque images (logo, QR) placed at sub-rects of the box.</summary>
+    public IReadOnlyList<PlacedImageSpec> Images { get; init; } = Array.Empty<PlacedImageSpec>();
+}
+
+/// <summary>An opaque image placed at a box-local sub-rectangle (origin bottom-left, points).
+/// <c>Rgba</c> is straight-alpha RGBA8, <c>PxW</c>×<c>PxH</c>, rows top-to-bottom; the core
+/// composites it over white. Mirrors the core's PlacedImage.</summary>
+public sealed class PlacedImageSpec
+{
+    public required byte[] Rgba { get; init; }
+    public required int PxW { get; init; }
+    public required int PxH { get; init; }
+    public double X { get; init; }
+    public double Y { get; init; }
+    public double W { get; init; }
+    public double H { get; init; }
 }
 
 /// <summary>A request to sign a PDF. Mirrors macOS SignRequest.</summary>

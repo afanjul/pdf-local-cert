@@ -60,6 +60,7 @@ public sealed partial class AppViewModel : ObservableObject
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(CertDetailText))]
     [NotifyPropertyChangedFor(nameof(CanSign))]
+    [NotifyPropertyChangedFor(nameof(PreviewLines))]
     private CertificateInfo? _selectedCert;
 
     public string CertDetailText
@@ -81,6 +82,7 @@ public sealed partial class AppViewModel : ObservableObject
 
     [ObservableProperty]
     [NotifyPropertyChangedFor(nameof(SignAllVisibility))]
+    [NotifyPropertyChangedFor(nameof(AppearanceVisibility))]
     private bool _visibleSignature;
 
     [ObservableProperty] private bool _signAllPages;
@@ -89,12 +91,106 @@ public sealed partial class AppViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(TsaVisibility))]
     private bool _useTimestamp;
 
-    [ObservableProperty] private string _reason = "";
-    [ObservableProperty] private string _location = "";
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviewLines))]
+    private string _reason = "";
 
-    /// <summary>"Sign all pages" only applies to a visible (placed) signature.</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(PreviewLines))]
+    private string _location = "";
+
+    /// <summary>"Sign all pages" + the appearance editor only apply to a visible signature.</summary>
     public Visibility SignAllVisibility => VisibleSignature ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility AppearanceVisibility => VisibleSignature ? Visibility.Visible : Visibility.Collapsed;
     public Visibility TsaVisibility => UseTimestamp ? Visibility.Visible : Visibility.Collapsed;
+
+    // ── Visible-signature appearance (mirrors macOS AppearanceConfig) ─────────
+
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(PreviewLines))][NotifyPropertyChangedFor(nameof(LabelToggleVisibility))][NotifyPropertyChangedFor(nameof(CustomLabelVisibility))] private bool _showName = true;
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(PreviewLines))][NotifyPropertyChangedFor(nameof(CustomLabelVisibility))] private bool _showLabel;
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(PreviewLines))] private string _customLabel = "Firmado por:";
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(PreviewLines))] private bool _showDate = true;
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(PreviewLines))][NotifyPropertyChangedFor(nameof(ReasonFieldVisibility))] private bool _showReason;
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(PreviewLines))][NotifyPropertyChangedFor(nameof(LocationFieldVisibility))] private bool _showLocation;
+    [ObservableProperty] private bool _showBorder;
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(PreviewBackgroundBrush))] private bool _transparentBackground;
+    [ObservableProperty] private bool _wrapText;
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(PreviewFontSize))] private double _fontSize = 9;
+
+    public Visibility LabelToggleVisibility => ShowName ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility CustomLabelVisibility => ShowName && ShowLabel ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility ReasonFieldVisibility => ShowReason ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility LocationFieldVisibility => ShowLocation ? Visibility.Visible : Visibility.Collapsed;
+
+    // Live preview (XAML approximation of the embedded output; true bitmap parity
+    // arrives with the shared SignatureComposer port in 7.7).
+    public double PreviewFontSize => FontSize;
+    public Microsoft.UI.Xaml.Media.Brush PreviewBackgroundBrush => TransparentBackground
+        ? new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.Transparent)
+        : new Microsoft.UI.Xaml.Media.SolidColorBrush(Microsoft.UI.Colors.White);
+
+    /// <summary>The text lines for the signature box, built from the appearance + data.</summary>
+    public List<string> BuildLines(string signerName)
+    {
+        var lines = new List<string>();
+        if (ShowName)
+            lines.Add((ShowLabel && !string.IsNullOrWhiteSpace(CustomLabel) ? CustomLabel + " " : "") + signerName);
+        if (ShowReason && !string.IsNullOrWhiteSpace(Reason)) lines.Add(Reason.Trim());
+        if (ShowLocation && !string.IsNullOrWhiteSpace(Location)) lines.Add(Location.Trim());
+        if (ShowDate) lines.Add(DateTime.Now.ToString("dd/MM/yyyy HH:mm"));
+        return lines;
+    }
+
+    /// <summary>Preview lines using the selected signer (or a placeholder name).</summary>
+    public List<string> PreviewLines => BuildLines(SelectedCert?.CommonName ?? "Nombre Apellidos");
+
+    // ── Appearance presets (mirrors macOS PresetStore) ───────────────────────
+
+    public ObservableCollection<AppearancePreset> Presets { get; } = new(PresetStore.Load());
+
+    [ObservableProperty] private AppearancePreset? _selectedPreset;
+
+    partial void OnSelectedPresetChanged(AppearancePreset? value)
+    {
+        if (value is not null) ApplyConfig(value.Config);
+    }
+
+    /// <summary>Snapshot the current appearance into a serializable config.</summary>
+    public AppearanceConfig CaptureConfig() => new()
+    {
+        ShowName = ShowName, ShowLabel = ShowLabel, CustomLabel = CustomLabel,
+        ShowDate = ShowDate, ShowReason = ShowReason, ShowLocation = ShowLocation,
+        ShowBorder = ShowBorder, TransparentBackground = TransparentBackground,
+        WrapText = WrapText, FontSize = FontSize,
+    };
+
+    /// <summary>Apply a saved config back onto the live editor.</summary>
+    public void ApplyConfig(AppearanceConfig c)
+    {
+        ShowName = c.ShowName; ShowLabel = c.ShowLabel; CustomLabel = c.CustomLabel;
+        ShowDate = c.ShowDate; ShowReason = c.ShowReason; ShowLocation = c.ShowLocation;
+        ShowBorder = c.ShowBorder; TransparentBackground = c.TransparentBackground;
+        WrapText = c.WrapText; FontSize = c.FontSize;
+    }
+
+    public void SavePreset(string name)
+    {
+        var trimmed = name.Trim();
+        if (trimmed.Length == 0) return;
+        var existing = Presets.FirstOrDefault(p => p.Name == trimmed);
+        var cfg = CaptureConfig();
+        if (existing is not null) existing.Config = cfg;
+        else Presets.Add(new AppearancePreset { Name = trimmed, Config = cfg });
+        PresetStore.Save(Presets);
+    }
+
+    public void DeleteSelectedPreset()
+    {
+        if (SelectedPreset is not { } p) return;
+        Presets.Remove(p);
+        SelectedPreset = null;
+        PresetStore.Save(Presets);
+    }
 
     /// <summary>
     /// Qualified Spanish/EU TSA (ACCV, on the EU Trusted List) so timestamped
