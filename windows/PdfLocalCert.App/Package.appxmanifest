@@ -15,7 +15,7 @@
   <Identity
     Name="Palbin.PDFLocalCert"
     Publisher="CN=PDF Local Cert (Dev)"
-    Version="1.0.9.0"
+    Version="1.0.10.0"
     ProcessorArchitecture="x64" />
 
   <Properties>

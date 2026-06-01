@@ -46,6 +46,7 @@ public sealed partial class AppViewModel : ObservableObject
     [NotifyPropertyChangedFor(nameof(HasDocument))]
     [NotifyPropertyChangedFor(nameof(DropZoneVisibility))]
     [NotifyPropertyChangedFor(nameof(PageViewerVisibility))]
+    [NotifyPropertyChangedFor(nameof(CanSign))]
     private string? _filePath;
 
     public bool HasDocument => !string.IsNullOrEmpty(FilePath);
