@@ -13,7 +13,7 @@
   (the chain is publicly trusted) -- see windows/RELEASE.md.
 
 .PARAMETER Msix
-  Path to the signed .msix (default: build\PdfLocalCert.msix next to this script).
+  Path to the signed .msix (default: ..\build\PdfLocalCert.msix, i.e. windows\build).
 
 .PARAMETER Cer
   Path to the exported public cert (default: same basename as the MSIX, .cer).
@@ -23,7 +23,7 @@
   pwsh windows/scripts/install-msix.ps1 -Msix C:\plc\PdfLocalCert.msix
 #>
 param(
-    [string] $Msix = "$PSScriptRoot\..\..\build\PdfLocalCert.msix",
+    [string] $Msix = "$PSScriptRoot\..\build\PdfLocalCert.msix",
     [string] $Cer
 )
 
