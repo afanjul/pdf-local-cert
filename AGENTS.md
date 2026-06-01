@@ -35,9 +35,21 @@ Both configured in `~/.ssh/config`, both auth with `~/.ssh/plc_win_vm`.
 | Host | IP | Arch | dotnet | Notes |
 |---|---|---|---|---|
 | `winvm` | 10.211.55.3 | **ARM64** | 8.0.421 | Active test box. Home `C:\Users\aleksdj`. |
-| `winx64` | 192.168.100.42 | **AMD64/x64** | — not installed | Brand-new install; bare. Needs .NET 8 SDK + repo before it can build. |
+| `winx64` | 192.168.100.42 | **AMD64/x64** | — not installed | Separate **zvm** VM (not Parallels). Brand-new/bare. No shared folder; needs .NET 8 SDK + a repo clone (or a share set up) before it can build. |
 
-`$HOME` on the remotes is `C:\Users\aleksdj`. Clone/sync the repo there before building.
+`$HOME` on the remotes is `C:\Users\aleksdj`.
+
+**`winvm` sees this repo directly** via a Parallels shared folder — the Mac home is
+mounted at `\\Mac\Home`, so this repo is live at `\\Mac\Home\apps\pdf-local-cert`
+(no clone/sync; same bytes as the Mac working tree, including uncommitted edits).
+`winx64` has no such share — it needs a real clone before it can build.
+
+Driving PowerShell over SSH: prefer `-EncodedCommand` (base64 of UTF-16LE) to dodge
+bash→ssh→PowerShell quote mangling:
+```bash
+ENC=$(printf '%s' "$PS_SCRIPT" | iconv -t UTF-16LE | base64)
+ssh winvm "powershell -NoProfile -EncodedCommand $ENC"
+```
 
 ## Build & run
 
