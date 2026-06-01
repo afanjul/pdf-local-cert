@@ -48,6 +48,7 @@ public sealed partial class MainWindow : Window
             PagesItems.ItemsSource = pages;
             VerifyButton.IsEnabled = true;
             SignButton.IsEnabled = true;
+            SignAndSaveButton.IsEnabled = true;
             VisibleSigToggle.IsEnabled = true;
             StatusText.Text = $"{System.IO.Path.GetFileName(path)} — {pages.Count} page(s)";
         }
@@ -107,7 +108,7 @@ public sealed partial class MainWindow : Window
         // Collect the drawn placement(s). Visible signature on + a box drawn =>
         // visible placement; otherwise an invisible whole-document signature.
         var placements = new List<PlacementSpec>();
-        if (VisibleSigToggle.IsChecked == true && PagesItems.ItemsSource is IEnumerable<RenderedPage> pages)
+        if (VisibleSigToggle.IsOn && PagesItems.ItemsSource is IEnumerable<RenderedPage> pages)
         {
             var lines = new List<string> { $"Firmado por: {cert.CommonName}" };
             if (!string.IsNullOrWhiteSpace(dialog.Reason)) lines.Add(dialog.Reason!);
@@ -218,7 +219,7 @@ public sealed partial class MainWindow : Window
 
     private void OnVisibleToggled(object sender, RoutedEventArgs e)
     {
-        var on = VisibleSigToggle.IsChecked == true;
+        var on = VisibleSigToggle.IsOn;
         StatusText.Text = on
             ? "Visible signature: drag a box on the page where the signature should appear."
             : "Visible signature off (an invisible, whole-document signature will be used).";
@@ -228,7 +229,7 @@ public sealed partial class MainWindow : Window
 
     private void OnPagePointerPressed(object sender, PointerRoutedEventArgs e)
     {
-        if (VisibleSigToggle.IsChecked != true) return;
+        if (!VisibleSigToggle.IsOn) return;
         if (sender is not Canvas canvas || canvas.Tag is not RenderedPage page) return;
 
         // Only one box across the document: clear any previous placement.

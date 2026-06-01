@@ -12,8 +12,6 @@
         <!-- Command bar -->
         <CommandBar Grid.Row="0" DefaultLabelPosition="Right" HorizontalAlignment="Left" Background="Transparent">
             <AppBarButton x:Name="OpenButton" x:Uid="OpenButton" Icon="OpenFile" Label="Open PDF" Click="OnOpenClicked" />
-            <AppBarToggleButton x:Name="VisibleSigToggle" x:Uid="VisibleSigToggle" Icon="Highlight" Label="Visible signature"
-                                IsEnabled="False" Checked="OnVisibleToggled" Unchecked="OnVisibleToggled" />
             <AppBarButton x:Name="SignButton" x:Uid="SignButton" Icon="Edit" Label="Sign" Click="OnSignClicked" IsEnabled="False" />
             <AppBarButton x:Name="VerifyButton" x:Uid="VerifyButton" Icon="Permissions" Label="Verify" Click="OnVerifyClicked" IsEnabled="False" />
             <AppBarSeparator />
@@ -21,40 +19,102 @@
             <AppBarButton x:Name="SettingsButton" x:Uid="SettingsButton" Icon="Setting" Label="Settings" Click="OnSettingsClicked" />
         </CommandBar>
 
-        <!-- Page viewer: continuous vertical scroll of rendered pages -->
-        <ScrollViewer Grid.Row="1" x:Name="PageScroller" HorizontalScrollMode="Auto"
-                      HorizontalScrollBarVisibility="Auto" ZoomMode="Enabled"
-                      SizeChanged="OnViewerSizeChanged"
-                      Background="{ThemeResource LayerFillColorDefaultBrush}" Padding="16">
-            <ItemsControl x:Name="PagesItems">
-                <ItemsControl.ItemTemplate>
-                    <DataTemplate>
-                        <Border Margin="0,0,0,16" HorizontalAlignment="Center"
-                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                            <!-- Image + a draw surface on top for placing the signature box -->
-                            <Grid Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}">
-                                <Image Source="{Binding Image}" Stretch="Fill" />
-                                <Canvas x:Name="DrawSurface" Background="Transparent"
-                                        PointerPressed="OnPagePointerPressed"
-                                        PointerMoved="OnPagePointerMoved"
-                                        PointerReleased="OnPagePointerReleased"
-                                        Tag="{Binding}">
-                                    <!-- The drawn signature box -->
-                                    <Border Canvas.Left="{Binding BoxX}" Canvas.Top="{Binding BoxY}"
-                                            Width="{Binding BoxW}" Height="{Binding BoxH}"
-                                            Visibility="{Binding BoxVisibility}"
-                                            BorderThickness="2" BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
-                                            Background="#330078D4" IsHitTestVisible="False">
-                                        <TextBlock Text="Signature" FontSize="11" Margin="4,2,0,0"
-                                                   Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
-                                    </Border>
-                                </Canvas>
-                            </Grid>
-                        </Border>
-                    </DataTemplate>
-                </ItemsControl.ItemTemplate>
-            </ItemsControl>
-        </ScrollViewer>
+        <!-- Split: PDF viewer (flexible) | sidebar (fixed) -->
+        <Grid Grid.Row="1" ColumnDefinitions="*,320">
+
+            <!-- Page viewer: continuous vertical scroll of rendered pages -->
+            <ScrollViewer Grid.Column="0" x:Name="PageScroller" HorizontalScrollMode="Auto"
+                          HorizontalScrollBarVisibility="Auto" ZoomMode="Enabled"
+                          SizeChanged="OnViewerSizeChanged"
+                          Background="{ThemeResource LayerFillColorDefaultBrush}" Padding="16">
+                <ItemsControl x:Name="PagesItems">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <Border Margin="0,0,0,16" HorizontalAlignment="Center"
+                                    BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                <!-- Image + a draw surface on top for placing the signature box -->
+                                <Grid Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}">
+                                    <Image Source="{Binding Image}" Stretch="Fill" />
+                                    <Canvas x:Name="DrawSurface" Background="Transparent"
+                                            PointerPressed="OnPagePointerPressed"
+                                            PointerMoved="OnPagePointerMoved"
+                                            PointerReleased="OnPagePointerReleased"
+                                            Tag="{Binding}">
+                                        <!-- The drawn signature box -->
+                                        <Border Canvas.Left="{Binding BoxX}" Canvas.Top="{Binding BoxY}"
+                                                Width="{Binding BoxW}" Height="{Binding BoxH}"
+                                                Visibility="{Binding BoxVisibility}"
+                                                BorderThickness="2" BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                                                Background="#330078D4" IsHitTestVisible="False">
+                                            <TextBlock Text="Signature" FontSize="11" Margin="4,2,0,0"
+                                                       Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                        </Border>
+                                    </Canvas>
+                                </Grid>
+                            </Border>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
+            </ScrollViewer>
+
+            <!-- Right sidebar: certificate + signature options -->
+            <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                    BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1,0,0,0">
+                <Grid Padding="20" RowDefinitions="Auto,*,Auto">
+
+                    <!-- Top: certificate + toggles -->
+                    <StackPanel Grid.Row="0" Spacing="20">
+
+                        <StackPanel Spacing="8">
+                            <TextBlock Text="Certificate" Style="{StaticResource SubtitleTextBlockStyle}" />
+                            <ComboBox x:Name="CertCombo"
+                                      AutomationProperties.AutomationId="CertCombo"
+                                      HorizontalAlignment="Stretch"
+                                      PlaceholderText="Select a certificate" />
+                            <TextBlock x:Name="CertDetailText"
+                                       Text="No certificate selected."
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="2">
+                            <ToggleSwitch x:Name="VisibleSigToggle"
+                                          x:Uid="VisibleSigToggle"
+                                          AutomationProperties.AutomationId="VisibleSigToggle"
+                                          IsEnabled="False"
+                                          Toggled="OnVisibleToggled" />
+                            <TextBlock Text="Draw a box on the page to place the signature."
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+
+                        <StackPanel Spacing="2">
+                            <ToggleSwitch x:Name="TimestampToggle"
+                                          AutomationProperties.AutomationId="TimestampToggle"
+                                          Header="Timestamp (B-T)"
+                                          IsEnabled="False" />
+                            <TextBlock Text="Add a trusted RFC 3161 timestamp (PAdES B-T)."
+                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+
+                    </StackPanel>
+
+                    <!-- Bottom: primary action -->
+                    <Button Grid.Row="2" x:Name="SignAndSaveButton"
+                            AutomationProperties.AutomationId="SignAndSaveButton"
+                            Content="Sign and save"
+                            Style="{StaticResource AccentButtonStyle}"
+                            HorizontalAlignment="Stretch"
+                            IsEnabled="False"
+                            Click="OnSignClicked" />
+
+                </Grid>
+            </Border>
+        </Grid>
 
         <!-- Status -->
         <Border Grid.Row="2" Padding="16,8" Background="{ThemeResource LayerFillColorDefaultBrush}">

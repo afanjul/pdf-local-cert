@@ -33,7 +33,7 @@
   <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
 
   <data name="OpenButton.Label"><value>Open PDF</value></data>
-  <data name="VisibleSigToggle.Label"><value>Visible signature</value></data>
+  <data name="VisibleSigToggle.Header"><value>Visible signature</value></data>
   <data name="SignButton.Label"><value>Sign</value></data>
   <data name="VerifyButton.Label"><value>Verify</value></data>
   <data name="PingButton.Label"><value>Ping core</value></data>
