@@ -11,14 +11,14 @@
     <Grid RowDefinitions="Auto,*,Auto">
         <!-- Command bar -->
         <CommandBar Grid.Row="0" DefaultLabelPosition="Right" HorizontalAlignment="Left" Background="Transparent">
-            <AppBarButton x:Name="OpenButton" Icon="OpenFile" Label="Open PDF" Click="OnOpenClicked" />
-            <AppBarToggleButton x:Name="VisibleSigToggle" Icon="Highlight" Label="Visible signature"
+            <AppBarButton x:Name="OpenButton" x:Uid="OpenButton" Icon="OpenFile" Label="Open PDF" Click="OnOpenClicked" />
+            <AppBarToggleButton x:Name="VisibleSigToggle" x:Uid="VisibleSigToggle" Icon="Highlight" Label="Visible signature"
                                 IsEnabled="False" Checked="OnVisibleToggled" Unchecked="OnVisibleToggled" />
-            <AppBarButton x:Name="SignButton" Icon="Edit" Label="Sign" Click="OnSignClicked" IsEnabled="False" />
-            <AppBarButton x:Name="VerifyButton" Icon="Permissions" Label="Verify" Click="OnVerifyClicked" IsEnabled="False" />
+            <AppBarButton x:Name="SignButton" x:Uid="SignButton" Icon="Edit" Label="Sign" Click="OnSignClicked" IsEnabled="False" />
+            <AppBarButton x:Name="VerifyButton" x:Uid="VerifyButton" Icon="Permissions" Label="Verify" Click="OnVerifyClicked" IsEnabled="False" />
             <AppBarSeparator />
-            <AppBarButton x:Name="PingButton" Icon="Sync" Label="Ping core" Click="OnPingClicked" />
-            <AppBarButton x:Name="SettingsButton" Icon="Setting" Label="Settings" Click="OnSettingsClicked" />
+            <AppBarButton x:Name="PingButton" x:Uid="PingButton" Icon="Sync" Label="Ping core" Click="OnPingClicked" />
+            <AppBarButton x:Name="SettingsButton" x:Uid="SettingsButton" Icon="Setting" Label="Settings" Click="OnSettingsClicked" />
         </CommandBar>
 
         <!-- Page viewer: continuous vertical scroll of rendered pages -->

@@ -27,6 +27,7 @@
     <LangVersion>latest</LangVersion>
     <RootNamespace>PdfLocalCert.App</RootNamespace>
     <ApplicationManifest>app.manifest</ApplicationManifest>
+    <DefaultLanguage>en-US</DefaultLanguage>
     <WindowsPackageType>None</WindowsPackageType>
     <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
     <EnableMsixTooling>true</EnableMsixTooling>
