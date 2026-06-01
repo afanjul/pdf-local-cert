@@ -51,6 +51,23 @@ ENC=$(printf '%s' "$PS_SCRIPT" | iconv -t UTF-16LE | base64)
 ssh winvm "powershell -NoProfile -EncodedCommand $ENC"
 ```
 
+## Who runs what — test handoff
+
+The agent **builds** on the Windows hosts over SSH (headless: `dotnet`/`pwsh` only).
+The agent **cannot** see a GUI, drive the WinUI window, click, draw, or eyeball a
+rendered PDF. So:
+
+> **Any visual / interactive / "run the app and look" test is run by the USER.**
+> The agent writes **explicit, numbered, copy-pasteable steps** and the exact
+> observations to report back; the user runs them on the Windows box and reports
+> results. The agent never claims a GUI behaviour was verified unless the user
+> reported it.
+
+Agent does headlessly over SSH: builds, unit tests (`dotnet test`), publish, MSIX
+pack/sign, file/cert inspection. Everything that needs a screen or a human judgement
+(launch, placement, sign-dialog flow, "where did the signature land") → hand to user
+with steps + expected/observe checklist.
+
 ## Build & run
 
 ### Rust core
@@ -66,7 +83,8 @@ Two publish layouts — **the `WindowsPackageType` flag is opposite for each, do
 
 - **Loose dev .exe** (fast inner loop, no install):
   ```powershell
-  pwsh windows/scripts/publish-loose.ps1 -Run
+  # winvm has only Windows PowerShell (no pwsh) — invoke the script with &, not pwsh:
+  & windows\scripts\publish-loose.ps1 -Rid win-arm64    # win-x64 default
   ```
   Publishes `WindowsPackageType=None`; the WinAppSDK bootstrapper resolves the runtime
   at launch so the `.exe` runs directly from the publish folder.
