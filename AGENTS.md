@@ -95,7 +95,7 @@ Two publish layouts — **the `WindowsPackageType` flag is opposite for each, do
 
 - **MSIX package** (ship/install test):
   ```powershell
-  pwsh windows/scripts/pack-msix.ps1 -PublishDir <dir>
+  & windows\scripts\pack-msix.ps1 -PublishDir <dir>   # -> windows/build/PdfLocalCert.msix
   ```
   Payload MUST be published `WindowsPackageType=MSIX`. A `None`-typed payload inside an
   MSIX **silently exits at launch** (packaged app gets its runtime from the dependency
@@ -104,6 +104,8 @@ Two publish layouts — **the `WindowsPackageType` flag is opposite for each, do
 ## Conventions
 
 - Commit/PR text: normal prose, Conventional Commits. (Chat may be terse; commits are not.)
-- Don't commit build artifacts under `*/bin/`.
+- Build outputs are **per-platform**, never at repo root: `apple/build/` (the `.app`/dmg,
+  via `apple/scripts/build.sh`), `windows/build/` (the `.msix`, via `pack-msix.ps1`), and
+  standard `*/bin/`,`*/obj/` for .NET. All gitignored. Don't reintroduce a root `build/`.
 - Stale `windows/PdfLocalCert.App/bin/.../win-x64/*.exe` on the Mac is a leftover sync,
   not a local build — macOS can't compile the WinUI shell.

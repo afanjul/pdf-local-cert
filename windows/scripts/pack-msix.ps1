@@ -31,7 +31,7 @@
 #>
 param(
     [Parameter(Mandatory = $true)] [string] $PublishDir,
-    [string] $OutFile = "$PSScriptRoot\..\..\build\PdfLocalCert.msix",
+    [string] $OutFile = "$PSScriptRoot\..\build\PdfLocalCert.msix",
     [string] $CertSubject = "CN=PDF Local Cert (Dev)",
     [string] $PfxPassword = "devsign"
 )

@@ -14,7 +14,8 @@ target/
 **/bin/
 **/obj/
 
-# Local app/package builds (the built app + dmg live here)
+# Local app/package builds, per platform: apple/build (the .app + dmg),
+# windows/build (the .msix). Bare pattern matches the dir at any depth.
 build/
 DerivedData/
 .local-build/
