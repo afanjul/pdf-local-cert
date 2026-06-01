@@ -43,4 +43,17 @@
     <ProjectReference Include="..\PdfLocalCert.Core\PdfLocalCert.Core.csproj" />
   </ItemGroup>
 
+  <!--
+    Phase 5.1: bundle the cross-compiled Rust core sidecar at the package root so
+    CoreClient.ResolveExePath() finds it beside the app (both `dotnet publish` output
+    and the MSIX). Guarded by Exists so a core-less checkout / host-only unit-test
+    build still succeeds; CI (5.4) and the VM publish drop the exe before packing.
+  -->
+  <ItemGroup Condition="Exists('..\..\core\target\x86_64-pc-windows-msvc\release\pdflocalcert-core.exe')">
+    <Content Include="..\..\core\target\x86_64-pc-windows-msvc\release\pdflocalcert-core.exe">
+      <Link>pdflocalcert-core.exe</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
 </Project>
