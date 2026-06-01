@@ -38,7 +38,7 @@
 
             <muxc:InfoBar xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
                           IsOpen="True" Severity="Informational" IsClosable="False"
-                          Message="This creates an invisible signature covering the whole document. Visible signature placement is coming next." />
+                          Message="If you drew a signature box on the page (Visible signature), it will appear there. Otherwise the document gets an invisible signature covering the whole file." />
         </StackPanel>
     </ScrollViewer>
 </ContentDialog>

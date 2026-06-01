@@ -12,6 +12,8 @@
         <!-- Command bar -->
         <CommandBar Grid.Row="0" DefaultLabelPosition="Right" HorizontalAlignment="Left" Background="Transparent">
             <AppBarButton x:Name="OpenButton" Icon="OpenFile" Label="Open PDF" Click="OnOpenClicked" />
+            <AppBarToggleButton x:Name="VisibleSigToggle" Icon="Highlight" Label="Visible signature"
+                                IsEnabled="False" Checked="OnVisibleToggled" Unchecked="OnVisibleToggled" />
             <AppBarButton x:Name="SignButton" Icon="Edit" Label="Sign" Click="OnSignClicked" IsEnabled="False" />
             <AppBarButton x:Name="VerifyButton" Icon="Permissions" Label="Verify" Click="OnVerifyClicked" IsEnabled="False" />
             <AppBarSeparator />
@@ -21,13 +23,32 @@
         <!-- Page viewer: continuous vertical scroll of rendered pages -->
         <ScrollViewer Grid.Row="1" x:Name="PageScroller" HorizontalScrollMode="Auto"
                       HorizontalScrollBarVisibility="Auto" ZoomMode="Enabled"
+                      SizeChanged="OnViewerSizeChanged"
                       Background="{ThemeResource LayerFillColorDefaultBrush}" Padding="16">
             <ItemsControl x:Name="PagesItems">
                 <ItemsControl.ItemTemplate>
                     <DataTemplate>
                         <Border Margin="0,0,0,16" HorizontalAlignment="Center"
                                 BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                            <Image Source="{Binding Image}" Stretch="None" />
+                            <!-- Image + a draw surface on top for placing the signature box -->
+                            <Grid Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}">
+                                <Image Source="{Binding Image}" Stretch="Fill" />
+                                <Canvas x:Name="DrawSurface" Background="Transparent"
+                                        PointerPressed="OnPagePointerPressed"
+                                        PointerMoved="OnPagePointerMoved"
+                                        PointerReleased="OnPagePointerReleased"
+                                        Tag="{Binding}">
+                                    <!-- The drawn signature box -->
+                                    <Border Canvas.Left="{Binding BoxX}" Canvas.Top="{Binding BoxY}"
+                                            Width="{Binding BoxW}" Height="{Binding BoxH}"
+                                            Visibility="{Binding BoxVisibility}"
+                                            BorderThickness="2" BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                                            Background="#330078D4" IsHitTestVisible="False">
+                                        <TextBlock Text="Signature" FontSize="11" Margin="4,2,0,0"
+                                                   Foreground="{ThemeResource AccentTextFillColorPrimaryBrush}" />
+                                    </Border>
+                                </Canvas>
+                            </Grid>
                         </Border>
                     </DataTemplate>
                 </ItemsControl.ItemTemplate>
