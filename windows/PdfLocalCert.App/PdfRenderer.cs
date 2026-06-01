@@ -119,6 +119,10 @@ public sealed class RenderedPage : INotifyPropertyChanged
     public double BoxW { get => _boxW; private set { _boxW = value; Raise(nameof(BoxW)); } }
     public double BoxH { get => _boxH; private set { _boxH = value; Raise(nameof(BoxH)); } }
 
+    // Draw-surface size the box was captured against (TEMP, for placement diagnostics).
+    public double SurfaceW => _surfaceW;
+    public double SurfaceH => _surfaceH;
+
     /// <summary>Set the drawn box and the size of the draw surface it was drawn on
     /// (both in the same on-screen coordinate space).</summary>
     public void SetBox(double x, double y, double w, double h, double surfaceW, double surfaceH)
