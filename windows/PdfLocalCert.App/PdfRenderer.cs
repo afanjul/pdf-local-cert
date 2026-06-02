@@ -184,13 +184,25 @@ public sealed class RenderedPage : INotifyPropertyChanged
     /// no box is drawn.
     /// </summary>
     public PlacementSpec? ToPlacement(IReadOnlyList<string> lines, double fontSize, bool wrap,
-                                      bool border, bool background)
+                                      bool border, bool background,
+                                      Rgba8? logo = null, Rgba8? qr = null)
     {
         if (!_hasBox) return null;
 
         // Upright render => rotation 0, cropBox is the displayed point size.
         var mapper = new CoordinateMapper(new PdfRect(0, 0, PointWidth, PointHeight), 0);
         var user = mapper.UserSpaceRect(new PdfRect(_nx, _ny, _nw, _nh));
+
+        // Reserve a left strip for the logo and a right strip for the QR badge,
+        // narrowing the text column to match (mirrors macOS SignatureComposer).
+        var layout = SignatureImaging.Layout(user.Width, user.Height, logo?.Aspect, qr is not null);
+        var images = new List<PlacedImageSpec>();
+        if (logo is { } lg && layout.Logo is { } lr)
+            images.Add(new PlacedImageSpec { Rgba = lg.Bytes, PxW = lg.Width, PxH = lg.Height,
+                X = lr.X, Y = lr.Y, W = lr.W, H = lr.H });
+        if (qr is { } q && layout.Qr is { } qrr)
+            images.Add(new PlacedImageSpec { Rgba = q.Bytes, PxW = q.Width, PxH = q.Height,
+                X = qrr.X, Y = qrr.Y, W = qrr.W, H = qrr.H });
 
         return new PlacementSpec
         {
@@ -201,6 +213,9 @@ public sealed class RenderedPage : INotifyPropertyChanged
             Wrap = wrap,
             Border = border,
             Background = background,
+            TextX = layout.TextX,
+            TextW = layout.TextW,
+            Images = images,
         };
     }
 

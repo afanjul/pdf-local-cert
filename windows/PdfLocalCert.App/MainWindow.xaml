@@ -206,6 +206,24 @@
                                         </StackPanel>
                                     </Expander>
 
+                                    <!-- Logo + QR badge -->
+                                    <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                              Header="Logo &amp; QR">
+                                        <StackPanel Spacing="6">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Button Content="Choose logo…" Click="OnChooseLogo" />
+                                                <Button Content="Clear" Click="OnClearLogo"
+                                                        Visibility="{x:Bind ViewModel.LogoClearVisibility, Mode=OneWay}" />
+                                            </StackPanel>
+                                            <TextBlock Text="{x:Bind ViewModel.LogoName, Mode=OneWay}"
+                                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <CheckBox Content="QR verification badge"
+                                                      IsChecked="{x:Bind ViewModel.ShowQr, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Expander>
+
                                     <!-- Presets -->
                                     <StackPanel Spacing="6">
                                         <TextBlock Text="Presets" Style="{StaticResource CaptionTextBlockStyle}" />

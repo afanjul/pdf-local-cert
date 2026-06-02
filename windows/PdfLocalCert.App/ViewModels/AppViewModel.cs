@@ -117,6 +117,14 @@ public sealed partial class AppViewModel : ObservableObject
     [ObservableProperty] private bool _wrapText;
     [ObservableProperty][NotifyPropertyChangedFor(nameof(PreviewFontSize))] private double _fontSize = 9;
 
+    // Logo image + QR badge (parity phase 7.7). LogoPath null/empty = no logo.
+    [ObservableProperty][NotifyPropertyChangedFor(nameof(HasLogo))][NotifyPropertyChangedFor(nameof(LogoClearVisibility))][NotifyPropertyChangedFor(nameof(LogoName))] private string? _logoPath;
+    [ObservableProperty] private bool _showQr;
+
+    public bool HasLogo => !string.IsNullOrEmpty(LogoPath);
+    public Visibility LogoClearVisibility => HasLogo ? Visibility.Visible : Visibility.Collapsed;
+    public string LogoName => HasLogo ? System.IO.Path.GetFileName(LogoPath)! : "No logo chosen";
+
     public Visibility LabelToggleVisibility => ShowName ? Visibility.Visible : Visibility.Collapsed;
     public Visibility CustomLabelVisibility => ShowName && ShowLabel ? Visibility.Visible : Visibility.Collapsed;
     public Visibility ReasonFieldVisibility => ShowReason ? Visibility.Visible : Visibility.Collapsed;
@@ -162,6 +170,7 @@ public sealed partial class AppViewModel : ObservableObject
         ShowDate = ShowDate, ShowReason = ShowReason, ShowLocation = ShowLocation,
         ShowBorder = ShowBorder, TransparentBackground = TransparentBackground,
         WrapText = WrapText, FontSize = FontSize,
+        LogoPath = LogoPath, ShowQr = ShowQr,
     };
 
     /// <summary>Apply a saved config back onto the live editor.</summary>
@@ -171,6 +180,7 @@ public sealed partial class AppViewModel : ObservableObject
         ShowDate = c.ShowDate; ShowReason = c.ShowReason; ShowLocation = c.ShowLocation;
         ShowBorder = c.ShowBorder; TransparentBackground = c.TransparentBackground;
         WrapText = c.WrapText; FontSize = c.FontSize;
+        LogoPath = c.LogoPath; ShowQr = c.ShowQr;
     }
 
     public void SavePreset(string name)

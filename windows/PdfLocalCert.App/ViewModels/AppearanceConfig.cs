@@ -21,6 +21,10 @@ public sealed class AppearanceConfig
     public bool TransparentBackground { get; set; }
     public bool WrapText { get; set; }
     public double FontSize { get; set; } = 9;
+    /// <summary>Path to a logo/handwriting image placed left of the text, or null.</summary>
+    public string? LogoPath { get; set; }
+    /// <summary>Show a QR verification badge on the right of the box.</summary>
+    public bool ShowQr { get; set; }
 }
 
 /// <summary>A named, saved appearance (mirrors macOS AppearancePreset).</summary>

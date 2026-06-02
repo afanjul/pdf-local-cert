@@ -131,6 +131,19 @@ public sealed partial class MainWindow : Window
 
     private void OnDeletePreset(object sender, RoutedEventArgs e) => ViewModel.DeleteSelectedPreset();
 
+    // ── Logo (parity phase 7.7) ──────────────────────────────────────────────
+
+    private async void OnChooseLogo(object sender, RoutedEventArgs e)
+    {
+        var picker = new FileOpenPicker { SuggestedStartLocation = PickerLocationId.PicturesLibrary };
+        foreach (var ext in new[] { ".png", ".jpg", ".jpeg", ".bmp", ".gif" }) picker.FileTypeFilter.Add(ext);
+        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+        var file = await picker.PickSingleFileAsync();
+        if (file is not null) ViewModel.LogoPath = file.Path;
+    }
+
+    private void OnClearLogo(object sender, RoutedEventArgs e) => ViewModel.LogoPath = null;
+
     // ── Batch ────────────────────────────────────────────────────────────────
 
     private async void OnBatchAdd(object sender, RoutedEventArgs e)
@@ -325,6 +338,15 @@ public sealed partial class MainWindow : Window
         {
             var lines = ViewModel.BuildLines(cert.CommonName);
 
+            // Rasterize the logo + QR badge once and reuse the bytes across pages
+            // (parity phase 7.7). QR payload carries a per-signature verify token.
+            Rgba8? logo = ViewModel.HasLogo
+                ? await SignatureImaging.LoadLogoAsync(ViewModel.LogoPath!)
+                : null;
+            Rgba8? qr = ViewModel.ShowQr
+                ? SignatureImaging.Qr($"https://verify.pdflocalcert.app/v/{Guid.NewGuid():N}")
+                : null;
+
             // "Sign all pages": replicate the single drawn box's page-relative
             // fractions onto every page before building the specs.
             if (ViewModel.SignAllPages &&
@@ -336,7 +358,8 @@ public sealed partial class MainWindow : Window
             foreach (var p in pages)
             {
                 var spec = p.ToPlacement(lines, ViewModel.FontSize, ViewModel.WrapText,
-                                         ViewModel.ShowBorder, !ViewModel.TransparentBackground);
+                                         ViewModel.ShowBorder, !ViewModel.TransparentBackground,
+                                         logo, qr);
                 if (spec is not null) placements.Add(spec);
             }
             if (placements.Count == 0)

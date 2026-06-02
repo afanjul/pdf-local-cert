@@ -42,6 +42,8 @@
     <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
     <!-- Parity phase 7.0: one shared ObservableObject view model (mirrors macOS AppModel). -->
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <!-- Parity phase 7.7: QR badge generation (pure-managed, no native deps). -->
+    <PackageReference Include="QRCoder" Version="1.6.0" />
   </ItemGroup>
 
   <ItemGroup>
