@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate samples/grid-a4.pdf: an A4 calibration grid for signature-placement tests.
+"""Generate an A4 calibration grid PDF for signature-placement tests.
 
 Coordinates are PDF user-space points with origin at the BOTTOM-LEFT — the same space
 the core writes to /Rect. Major gridlines every 50 pt are labelled with their x/y value;
@@ -8,11 +8,12 @@ box can be read off the page directly (e.g. "box landed at x≈100, y≈700, ~14
 
 No third-party deps — emits the PDF by hand (Helvetica is a standard-14 font).
 """
+import argparse
 from pathlib import Path
 
 W, H = 595.276, 841.890  # A4, matches samples/contract-sample.pdf MediaBox
 
-def main() -> None:
+def page_content(page_number: int, page_count: int) -> bytes:
     g = []  # content-stream pieces
     g.append("q")
 
@@ -71,19 +72,42 @@ def main() -> None:
     g.append(f"1 0 0 1 6 {H-14:.2f} Tm (TOP-LEFT  \\(x=0, y={H:.0f}\\)) Tj")
     g.append(f"1 0 0 1 6 6 Tm (BOTTOM-LEFT origin \\(0,0\\)) Tj")
     g.append(f"1 0 0 1 {W/2-30:.2f} {H/2:.2f} Tm (centre {W/2:.0f},{H/2:.0f}) Tj")
+    if page_count > 1:
+        g.append(f"1 0 0 1 {W-88:.2f} {H-14:.2f} Tm (PAGE {page_number} / {page_count}) Tj")
     g.append("ET")
     g.append("Q")
 
-    content = "\n".join(g).encode("latin-1")
+    return "\n".join(g).encode("latin-1")
 
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--pages", type=int, default=1)
+    parser.add_argument("--output", type=Path)
+    args = parser.parse_args()
+    if args.pages < 1:
+        parser.error("--pages must be at least 1")
+
+    page_ids = list(range(3, 3 + args.pages))
+    content_ids = list(range(3 + args.pages, 3 + args.pages * 2))
+    font_id = 3 + args.pages * 2
+    kids = " ".join(f"{page_id} 0 R" for page_id in page_ids)
     objs = [
         b"<< /Type /Catalog /Pages 2 0 R >>",
-        b"<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
-        f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {W} {H}] "
-        f"/Resources << /Font << /F1 5 0 R >> >> /Contents 4 0 R >>".encode("latin-1"),
-        b"<< /Length " + str(len(content)).encode() + b" >>\nstream\n" + content + b"\nendstream",
-        b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+        f"<< /Type /Pages /Kids [{kids}] /Count {args.pages} >>".encode("latin-1"),
     ]
+    for content_id in content_ids:
+        objs.append(
+            f"<< /Type /Page /Parent 2 0 R /MediaBox [0 0 {W} {H}] "
+            f"/Resources << /Font << /F1 {font_id} 0 R >> >> "
+            f"/Contents {content_id} 0 R >>".encode("latin-1")
+        )
+    for page_number in range(1, args.pages + 1):
+        content = page_content(page_number, args.pages)
+        objs.append(
+            b"<< /Length " + str(len(content)).encode() + b" >>\nstream\n"
+            + content + b"\nendstream"
+        )
+    objs.append(b"<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>")
 
     out = bytearray(b"%PDF-1.4\n")
     offsets = []
@@ -98,9 +122,9 @@ def main() -> None:
     out += (f"trailer\n<< /Size {len(objs)+1} /Root 1 0 R >>\n"
             f"startxref\n{xref}\n%%EOF\n").encode()
 
-    dest = Path(__file__).with_name("grid-a4.pdf")
+    dest = args.output or Path(__file__).with_name("grid-a4.pdf")
     dest.write_bytes(out)
-    print(f"wrote {dest} ({len(out):,} bytes, {W}x{H} pt)")
+    print(f"wrote {dest} ({len(out):,} bytes, {args.pages} page(s), {W}x{H} pt)")
 
 if __name__ == "__main__":
     main()
