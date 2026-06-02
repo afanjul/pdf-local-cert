@@ -27,6 +27,7 @@ public sealed partial class MainWindow : Window
     {
         ViewModel = new AppViewModel();   // must exist before x:Bind runs
         InitializeComponent();
+        RootGrid.DataContext = ViewModel; // let in-page {Binding ElementName=RootGrid} reach the VM
         AppSettings.ApplyTheme(this);     // honour the persisted theme on launch
         VersionText.Text = $"v{AppVersion}";
         LoadIdentities();

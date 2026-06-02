@@ -96,8 +96,13 @@ public static class SignatureImaging
 
         if (logoAspect is double a && a > 0)
         {
-            double lw = Math.Min(side * a, w * 0.4);
-            logo = new BoxRect(left, inset, lw, side);
+            // Fit the logo inside a `side`-tall, `w*0.4`-wide slot while preserving its
+            // aspect ratio, then centre it vertically in the box (don't stretch to fill).
+            double lh = side, lw = side * a;
+            double maxW = w * 0.4;
+            if (lw > maxW) { lw = maxW; lh = lw / a; }
+            double ly = inset + (side - lh) / 2;
+            logo = new BoxRect(left, ly, lw, lh);
             left += lw + gap;
         }
         if (hasQr)
