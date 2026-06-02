@@ -17,6 +17,10 @@ The signing subject (`CN=...`) **must match** the `Publisher` in
 `PdfLocalCert.App/Package.appxmanifest`'s `<Identity>` element, or signing fails with
 `error 0x8007000B` (the package identity does not match the signing certificate).
 
+Increment the patch component in that same `<Identity Version>` for every packaged
+test iteration (for example, `1.0.14.0` → `1.0.15.0`). This keeps App Installer
+upgrades deterministic and makes the build visible in the app footer.
+
 ## Dev / sideload path (self-signed) — what CI does today
 
 The `windows-app` CI job builds an MSIX and signs it with a throwaway self-signed cert
