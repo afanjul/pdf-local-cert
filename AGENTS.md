@@ -106,6 +106,13 @@ subst S: \\Mac\Home\apps\pdf-local-cert; Set-Location S:\windows
 Set-Location C:\; subst S: /d
 ```
 
+**Execution-policy bypass is pre-authorized for builds.** The user has explicitly
+granted permission to run the repo's own build/pack/install `.ps1` scripts on the
+Windows hosts with `powershell -ExecutionPolicy Bypass` (default policy blocks the
+unsigned local scripts). This applies only to the in-repo scripts under
+`windows/scripts/` (`pack-msix.ps1`, `install-msix.ps1`, etc.) — not to arbitrary
+remote code.
+
 **Why MSIX-only (don't re-litigate):** a loose unpackaged `.exe` on this box fails two
 ways at once — framework-dependent crashes at startup needing the x64 **DDLM**
 (`0xc000027b` in `combase.dll`; `REGDB_E_CLASSNOTREG`), and self-contained can't be
