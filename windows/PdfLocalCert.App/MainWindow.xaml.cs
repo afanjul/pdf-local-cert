@@ -1,6 +1,7 @@
 using Microsoft.UI.Xaml;
 using Microsoft.UI.Xaml.Controls;
 using Microsoft.UI.Xaml.Input;
+using System.Linq;
 using PdfLocalCert.App.ViewModels;
 using PdfLocalCert.Core;
 using Windows.Foundation;
@@ -39,15 +40,25 @@ public sealed partial class MainWindow : Window
     {
         try
         {
+            // Preserve the current pick across a refresh (e.g. a cert added while the
+            // app is open) so re-enumerating doesn't reset the user's selection.
+            var keep = ViewModel.SelectedCert?.Thumbprint;
             ViewModel.Identities.Clear();
             foreach (var c in IdentityStore.LoadSigningIdentities()) ViewModel.Identities.Add(c);
-            ViewModel.SelectDefaultIdentity();
+            var still = keep is null ? null
+                : ViewModel.Identities.FirstOrDefault(c => c.Thumbprint == keep);
+            if (still is not null) ViewModel.SelectedCert = still;
+            else ViewModel.SelectDefaultIdentity();
         }
         catch (Exception ex)
         {
             ViewModel.StatusText = $"Could not read the certificate store: {ex.Message}";
         }
     }
+
+    /// <summary>Re-enumerate the cert store each time the picker opens, so a certificate
+    /// added while the app is running shows up without a restart.</summary>
+    private void OnCertDropDownOpened(object sender, object e) => LoadIdentities();
 
     /// <summary>App version from the MSIX package identity (matches the installed build).</summary>
     private static string AppVersion

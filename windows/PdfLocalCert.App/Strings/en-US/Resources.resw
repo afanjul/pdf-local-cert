@@ -54,13 +54,10 @@
   <data name="Content.Header"><value>Content</value></data>
   <data name="Name.Content"><value>Name</value></data>
   <data name="Label.Content"><value>Label</value></data>
-  <data name="Label.PlaceholderText"><value>Firmado por:</value></data>
   <data name="Date.Content"><value>Date</value></data>
   <data name="Reason.Content"><value>Reason</value></data>
-  <data name="Reason.PlaceholderText"><value>e.g. I approve this document</value></data>
   <data name="ReasonTextBox.PlaceholderText"><value>e.g. I approve this document</value></data>
   <data name="Location.Content"><value>Location</value></data>
-  <data name="Location.PlaceholderText"><value>e.g. Madrid, ES</value></data>
   <data name="LocationTextBox.PlaceholderText"><value>e.g. Madrid, ES</value></data>
   <data name="Style.Header"><value>Style</value></data>
   <data name="Border.Content"><value>Border</value></data>

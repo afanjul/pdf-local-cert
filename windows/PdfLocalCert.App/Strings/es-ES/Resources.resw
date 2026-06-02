@@ -54,15 +54,11 @@
   <data name="Content.Header"><value>Contenido</value></data>
   <data name="Name.Content"><value>Nombre</value></data>
   <data name="Label.Content"><value>Etiqueta</value></data>
-  <data name="Label.PlaceholderText"><value>Firmado por:</value></data>
-  <data name="LabelTextBox.PlaceholderText"><value>Firmado por:</value></data>
   <data name="Date.Content"><value>Fecha</value></data>
   <data name="Reason.Content"><value>Motivo</value></data>
   <data name="ReasonTextBox.PlaceholderText"><value>ej. Apruebo este documento</value></data>
-  <data name="Reason.PlaceholderText"><value>ejn</value></data>
-  <data name="Locatio..PlaceholderText"><value>ej. Madrid, ES Apruebo este documento</value></data>
-  <data name="LocationTextBox.Content"><value>Ubicación</value></data>
-  <data name="Location.PlaceholderText"><value>ej. Madrid, ES</value></data>
+  <data name="Location.Content"><value>Ubicación</value></data>
+  <data name="LocationTextBox.PlaceholderText"><value>ej. Madrid, ES</value></data>
   <data name="Style.Header"><value>Estilo</value></data>
   <data name="Border.Content"><value>Borde</value></data>
   <data name="TransparentBackground.Content"><value>Fondo transparente</value></data>
