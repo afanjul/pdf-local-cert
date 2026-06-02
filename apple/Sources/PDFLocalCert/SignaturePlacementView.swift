@@ -124,17 +124,6 @@ struct SignaturePlacementView: View {
                             return true
                         }
                         .shadow(radius: 2)
-                        .overlay {
-                            // First-run hint: once "visible signature" is on but
-                            // no box has been drawn yet, tell the user to draw one
-                            // right where they must act. Auto-hides on placement.
-                            if model.visibleSignature, model.placementNormalized == nil {
-                                PlacementHint()
-                                    .padding(margin)
-                                    .allowsHitTesting(false) // never block the draw gesture
-                                    .transition(.opacity)
-                            }
-                        }
                         .padding(margin)
                     }
                     .background(ScrollZoomCatcher { delta in model.adjustZoom(by: delta) })
@@ -166,35 +155,6 @@ struct SignaturePlacementView: View {
         let scale = min(2.0, 1600.0 / max(d.width, d.height, 1))
         let size = CGSize(width: d.width * scale, height: d.height * scale)
         pageImage = page.thumbnail(of: size, for: .cropBox)
-    }
-}
-
-/// Friendly first-run instruction shown centered over the page when the visible
-/// signature is enabled but not yet placed. Non-interactive so it never blocks
-/// the draw gesture underneath; fades out automatically once a box is drawn.
-private struct PlacementHint: View {
-    var body: some View {
-        VStack(spacing: 10) {
-            Image(systemName: "hand.draw")
-                .font(.system(size: 30, weight: .regular))
-                .foregroundStyle(.tint)
-            Text(NSLocalizedString("place_signature_hint_title", comment: ""))
-                .font(.headline)
-            Text(NSLocalizedString("place_signature_hint_body", comment: ""))
-                .font(.callout)
-                .foregroundStyle(.secondary)
-                .multilineTextAlignment(.center)
-                .fixedSize(horizontal: false, vertical: true)
-        }
-        .padding(20)
-        .frame(maxWidth: 300)
-        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 14))
-        .overlay {
-            RoundedRectangle(cornerRadius: 14)
-                .strokeBorder(Color.accentColor.opacity(0.35),
-                              style: StrokeStyle(lineWidth: 1.5, dash: [6, 4]))
-        }
-        .shadow(color: .black.opacity(0.18), radius: 12, y: 4)
     }
 }
 

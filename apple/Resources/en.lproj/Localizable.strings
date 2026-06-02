@@ -30,6 +30,8 @@
 "no_certificates_found" = "No certificates found in Keychain.";
 "visible_signature" = "Visible signature";
 "visible_signature_help" = "In addition to signing the document, it allows you to make your signature visible.";
+"place_signature_tip_title" = "Place the signature";
+"place_signature_tip_body" = "Drag a box on the page where the signature should appear.";
 "sign_all_pages" = "Sign on all pages";
 "timestamp" = "Timestamp (B-T)";
 "timestamp_help" = "Certifies that the document existed exactly as it is at this moment.";

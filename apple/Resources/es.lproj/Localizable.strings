@@ -30,6 +30,8 @@
 "no_certificates_found" = "No se encontraron certificados en el Llavero.";
 "visible_signature" = "Firma visible";
 "visible_signature_help" = "Además de firmar el documento, te permite hacer tu firma visible.";
+"place_signature_tip_title" = "Coloca la firma";
+"place_signature_tip_body" = "Arrastra un recuadro en la página donde debe aparecer la firma.";
 "sign_all_pages" = "Firmar en todas las páginas";
 "timestamp" = "Sello de tiempo (B-T)";
 "timestamp_help" = "Certifica que el documento existía tal como está en este momento exacto.";

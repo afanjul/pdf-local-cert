@@ -52,6 +52,7 @@ struct ContentView: View {
 struct SignTab: View {
     @Environment(AppModel.self) private var model
     @State private var isDropTargeted = false
+    @State private var showPlacementTip = false
 
     var body: some View {
         @Bindable var model = model
@@ -95,6 +96,25 @@ struct SignTab: View {
                     Divider()
 
                     Toggle(NSLocalizedString("visible_signature", comment: ""), isOn: $model.visibleSignature)
+                        .onChange(of: model.visibleSignature) { _, on in
+                            showPlacementTip = on
+                        }
+                        .popover(isPresented: $showPlacementTip, arrowEdge: .leading) {
+                            HStack(alignment: .center, spacing: 12) {
+                                Image(systemName: "hand.draw")
+                                    .font(.system(size: 26, weight: .regular))
+                                    .foregroundStyle(.tint)
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text(NSLocalizedString("place_signature_tip_title", comment: ""))
+                                        .font(.headline)
+                                    Text(NSLocalizedString("place_signature_tip_body", comment: ""))
+                                        .font(.callout).foregroundStyle(.secondary)
+                                        .fixedSize(horizontal: false, vertical: true)
+                                }
+                            }
+                            .padding(14)
+                            .frame(width: 280)
+                        }
                     Text(NSLocalizedString("visible_signature_help", comment: ""))
                         .font(.caption).foregroundStyle(.secondary)
                     if model.visibleSignature {
