@@ -15,7 +15,7 @@
   <Identity
     Name="Palbin.PDFLocalCert"
     Publisher="CN=PDF Local Cert (Dev)"
-    Version="1.0.12.0"
+    Version="1.0.13.0"
     ProcessorArchitecture="x64" />
 
   <Properties>
@@ -47,7 +47,7 @@
         Square150x150Logo="Images\Square150x150Logo.png"
         Square44x44Logo="Images\Square44x44Logo.png">
         <uap:DefaultTile Wide310x150Logo="Images\Wide310x150Logo.png" Square71x71Logo="Images\SmallTile.png" Square310x310Logo="Images\LargeTile.png" />
-        <uap:SplashScreen Image="Images\SplashScreen.png" />
+        <uap:SplashScreen Image="Images\SplashScreen.png" BackgroundColor="#2860BF" />
       </uap:VisualElements>
       <Extensions>
         <!-- Open .pdf via "Open with" / file association. -->

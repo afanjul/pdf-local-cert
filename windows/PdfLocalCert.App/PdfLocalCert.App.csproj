@@ -50,6 +50,15 @@
     <ProjectReference Include="..\PdfLocalCert.Core\PdfLocalCert.Core.csproj" />
   </ItemGroup>
 
+  <!-- App tile/logo assets (Start menu, taskbar, Store, splash). Branded from the
+       shared PDF Local Cert logo; replaces the Windows App SDK placeholder images.
+       MakePri indexes the scale-*/targetsize-* qualifiers from the file names. -->
+  <ItemGroup>
+    <Content Include="Images\**\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
   <!--
     Phase 5.1: bundle the cross-compiled Rust core sidecar at the package root so
     CoreClient.ResolveExePath() finds it beside the app (both `dotnet publish` output
