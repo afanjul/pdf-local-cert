@@ -13,6 +13,26 @@
 
             <muxc:InfoBar x:Name="PaywallBar" IsOpen="False" Severity="Warning" IsClosable="False" />
 
+            <!-- Appearance: theme + language -->
+            <StackPanel Spacing="8">
+                <TextBlock Text="Appearance" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <ComboBox x:Name="ThemeBox" Header="Theme" HorizontalAlignment="Stretch"
+                          SelectionChanged="OnThemeChanged">
+                    <ComboBoxItem Content="System" />
+                    <ComboBoxItem Content="Light" />
+                    <ComboBoxItem Content="Dark" />
+                </ComboBox>
+                <ComboBox x:Name="LanguageBox" Header="Language" HorizontalAlignment="Stretch"
+                          SelectionChanged="OnLanguageChanged">
+                    <ComboBoxItem Content="System" />
+                    <ComboBoxItem Content="Español" />
+                    <ComboBoxItem Content="English" />
+                </ComboBox>
+                <TextBlock Text="Language changes take full effect after restarting the app."
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+            </StackPanel>
+
             <!-- License / tier -->
             <StackPanel Spacing="8">
                 <TextBlock Text="License" Style="{StaticResource BodyStrongTextBlockStyle}" />

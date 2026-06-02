@@ -10,6 +10,7 @@ public partial class App : Application
 
     protected override void OnLaunched(LaunchActivatedEventArgs args)
     {
+        AppSettings.ApplyLanguage();   // set the locale override before any UI loads
         _window = new MainWindow();
         _window.Activate();
     }

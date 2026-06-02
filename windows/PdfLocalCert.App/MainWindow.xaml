@@ -10,7 +10,7 @@
     mc:Ignorable="d"
     Title="PDF Local Cert">
 
-    <Grid RowDefinitions="Auto,Auto,*,Auto">
+    <Grid x:Name="RootGrid" RowDefinitions="Auto,Auto,*,Auto">
         <!-- Command bar -->
         <CommandBar Grid.Row="0" DefaultLabelPosition="Right" HorizontalAlignment="Left" Background="Transparent">
             <AppBarButton x:Name="OpenButton" x:Uid="OpenButton" Icon="OpenFile" Label="Open PDF" Click="OnOpenClicked" />

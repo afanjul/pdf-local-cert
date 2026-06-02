@@ -27,6 +27,7 @@ public sealed partial class MainWindow : Window
     {
         ViewModel = new AppViewModel();   // must exist before x:Bind runs
         InitializeComponent();
+        AppSettings.ApplyTheme(this);     // honour the persisted theme on launch
         VersionText.Text = $"v{AppVersion}";
         LoadIdentities();
     }

@@ -33,9 +33,32 @@ public sealed partial class SettingsDialog : ContentDialog
             PaywallBar.Message = $"{paywallReason} Enter a license key below to unlock unlimited signatures.";
         }
 
+        ThemeBox.SelectedIndex = (int)AppSettings.Theme;
+        LanguageBox.SelectedIndex = (int)AppSettings.Language;
+        _ready = true;   // ignore the SelectionChanged fired while populating above
+
         SuffixBox.Text = CurrentSuffix;
         AboutText.Text = "Local PDF signing. Your private key never leaves the Windows certificate store.";
         RefreshTier();
+    }
+
+    /// <summary>Guards the SelectionChanged handlers against the initial population.</summary>
+    private bool _ready;
+
+    private void OnThemeChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_ready) return;
+        AppSettings.Theme = (AppTheme)ThemeBox.SelectedIndex;
+        // Apply live to the window root behind the dialog.
+        if (XamlRoot?.Content is Microsoft.UI.Xaml.FrameworkElement root)
+            root.RequestedTheme = AppSettings.ElementTheme;
+    }
+
+    private void OnLanguageChanged(object sender, SelectionChangedEventArgs e)
+    {
+        if (!_ready) return;
+        AppSettings.Language = (AppLanguage)LanguageBox.SelectedIndex;
+        AppSettings.ApplyLanguage();   // full effect next launch
     }
 
     private void RefreshTier()
