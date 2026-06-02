@@ -407,38 +407,39 @@ public sealed partial class MainWindow : Window
         }
     }
 
-    private async void OnVerifyClicked(object sender, RoutedEventArgs e)
+    // ── Verify queue ─────────────────────────────────────────────────────────
+
+    /// <summary>Toolbar "Verify": add the open document to the verify queue and
+    /// switch to the Verify section.</summary>
+    private void OnVerifyClicked(object sender, RoutedEventArgs e)
     {
         if (_renderer.FilePath is null) return;
-        try
-        {
-            var results = new SigningService().Verify(_renderer.FilePath);
-            await ShowVerifyDialog(results);
-        }
-        catch (SigningException ex) when (ex.Code == "NO_SIGNATURE")
-        {
-            await ShowDialog("Verify", "This document has no signatures.");
-        }
-        catch (Exception ex)
-        {
-            await ShowDialog("Verify failed", ex.Message);
-        }
+        ViewModel.AddVerifyFiles(new[] { _renderer.FilePath });
+        VerifySectionItem.IsSelected = true; // SelectorBar → OnSectionChanged sets the VM
     }
 
-    private async Task ShowVerifyDialog(List<VerificationResult> results)
+    private async void OnVerifyAdd(object sender, RoutedEventArgs e)
     {
-        var panel = new StackPanel { Spacing = 12 };
-        foreach (var r in results)
-        {
-            panel.Children.Add(new TextBlock
-            {
-                Text = $"{(r.Valid ? "✓ Valid" : "✗ Invalid")}\n" +
-                       $"Signer: {r.Signer}\nIssuer: {r.Issuer}\n" +
-                       $"Level: {r.Level}   Timestamp: {(r.HasTimestamp ? "yes" : "no")}",
-                TextWrapping = TextWrapping.Wrap,
-            });
-        }
-        await ShowContent($"{results.Count} signature(s)", panel);
+        var picker = new FileOpenPicker { SuggestedStartLocation = PickerLocationId.DocumentsLibrary };
+        picker.FileTypeFilter.Add(".pdf");
+        InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
+        var files = await picker.PickMultipleFilesAsync();
+        if (files is { Count: > 0 }) ViewModel.AddVerifyFiles(files.Select(f => f.Path));
+    }
+
+    private void OnVerifyReverify(object sender, RoutedEventArgs e) => ViewModel.ReverifyAll();
+    private void OnVerifyClear(object sender, RoutedEventArgs e) => ViewModel.ClearVerify();
+
+    private void OnVerifyRemove(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { Tag: VerifyItem item }) ViewModel.RemoveVerify(item);
+    }
+
+    private async void OnVerifyDrop(object sender, DragEventArgs e)
+    {
+        if (!e.DataView.Contains(Windows.ApplicationModel.DataTransfer.StandardDataFormats.StorageItems)) return;
+        var items = await e.DataView.GetStorageItemsAsync();
+        ViewModel.AddVerifyFiles(items.OfType<Windows.Storage.StorageFile>().Select(f => f.Path));
     }
 
     // Visible-signature placement (drag a box on a page).

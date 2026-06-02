@@ -260,6 +260,114 @@ public sealed partial class AppViewModel : ObservableObject
         OnPropertyChanged(nameof(BatchListVisibility));
     }
 
+    // ── Verify queue (mirrors macOS VerifierViewB) ───────────────────────────
+
+    public ObservableCollection<VerifyItem> VerifyItems { get; } = new();
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(VisibleVerifyItems))]
+    [NotifyPropertyChangedFor(nameof(VerifySummary))]
+    private bool _onlyInvalid;
+
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(VisibleVerifyItems))]
+    private bool _newestFirst = true;
+
+    public Visibility VerifyEmptyVisibility => VerifyItems.Count == 0 ? Visibility.Visible : Visibility.Collapsed;
+    public Visibility VerifyListVisibility => VerifyItems.Count == 0 ? Visibility.Collapsed : Visibility.Visible;
+
+    /// <summary>Items after the only-invalid filter and newest-first ordering.</summary>
+    public IEnumerable<VerifyItem> VisibleVerifyItems
+    {
+        get
+        {
+            IEnumerable<VerifyItem> f = OnlyInvalid ? VerifyItems.Where(i => i.IsInvalid) : VerifyItems;
+            return NewestFirst ? f.Reverse() : f;
+        }
+    }
+
+    public string VerifySummary
+    {
+        get
+        {
+            int pending = VerifyItems.Count(i => i.Verifying);
+            if (pending > 0) return $"Verifying {VerifyItems.Count - pending} of {VerifyItems.Count}…";
+            int invalid = VerifyItems.Count(i => i.IsInvalid);
+            return invalid == 0 ? $"{VerifyItems.Count} verified" : $"{VerifyItems.Count} verified · {invalid} invalid";
+        }
+    }
+
+    /// <summary>Add files to the verify queue (re-verifying any already present).</summary>
+    public void AddVerifyFiles(IEnumerable<string> paths)
+    {
+        foreach (var p in paths.Where(p => p.EndsWith(".pdf", StringComparison.OrdinalIgnoreCase)))
+        {
+            var existing = VerifyItems.FirstOrDefault(i => string.Equals(i.Path, p, StringComparison.OrdinalIgnoreCase));
+            var item = existing ?? new VerifyItem(p);
+            if (existing is null) VerifyItems.Add(item);
+            _ = VerifyOneAsync(item);
+        }
+        RaiseVerifyState();
+    }
+
+    public void ReverifyAll()
+    {
+        foreach (var item in VerifyItems) _ = VerifyOneAsync(item);
+    }
+
+    public void ClearVerify()
+    {
+        VerifyItems.Clear();
+        RaiseVerifyState();
+    }
+
+    public void RemoveVerify(VerifyItem item)
+    {
+        VerifyItems.Remove(item);
+        RaiseVerifyState();
+    }
+
+    private async Task VerifyOneAsync(VerifyItem item)
+    {
+        item.State = VerifyState.Verifying;
+        item.Results.Clear();
+        item.Error = "";
+        RaiseVerifyState();
+        try
+        {
+            var results = await Task.Run(() => new SigningService().Verify(item.Path));
+            if (results.Count == 0)
+            {
+                item.State = VerifyState.Failed;
+                item.Error = "No signatures.";
+            }
+            else
+            {
+                foreach (var r in results) item.Results.Add(r);
+                item.State = VerifyState.Done;
+            }
+        }
+        catch (SigningException ex) when (ex.Code == "NO_SIGNATURE")
+        {
+            item.State = VerifyState.Failed;
+            item.Error = "No signatures.";
+        }
+        catch (Exception ex)
+        {
+            item.State = VerifyState.Failed;
+            item.Error = ex.Message;
+        }
+        RaiseVerifyState();
+    }
+
+    public void RaiseVerifyState()
+    {
+        OnPropertyChanged(nameof(VerifySummary));
+        OnPropertyChanged(nameof(VerifyEmptyVisibility));
+        OnPropertyChanged(nameof(VerifyListVisibility));
+        OnPropertyChanged(nameof(VisibleVerifyItems));
+    }
+
     // ── Helpers ──────────────────────────────────────────────────────────────
 
     /// <summary>Pick a sensible default identity (first valid, else first).</summary>
