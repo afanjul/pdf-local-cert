@@ -4,8 +4,7 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:muxc="using:Microsoft.UI.Xaml.Controls"
-    Title="Settings"
-    CloseButtonText="Close"
+    x:Uid="SettingsDialog"
     DefaultButton="Close">
 
     <ScrollViewer>
@@ -15,62 +14,61 @@
 
             <!-- Appearance: theme + language -->
             <StackPanel Spacing="8">
-                <TextBlock Text="Appearance" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                <ComboBox x:Name="ThemeBox" Header="Theme" HorizontalAlignment="Stretch"
+                <TextBlock x:Uid="AppearanceSection" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <ComboBox x:Name="ThemeBox" x:Uid="Theme" HorizontalAlignment="Stretch"
                           SelectionChanged="OnThemeChanged">
-                    <ComboBoxItem Content="System" />
-                    <ComboBoxItem Content="Light" />
-                    <ComboBoxItem Content="Dark" />
+                    <ComboBoxItem x:Uid="ThemeSystem" />
+                    <ComboBoxItem x:Uid="ThemeLight" />
+                    <ComboBoxItem x:Uid="ThemeDark" />
                 </ComboBox>
-                <ComboBox x:Name="LanguageBox" Header="Language" HorizontalAlignment="Stretch"
+                <ComboBox x:Name="LanguageBox" x:Uid="Language" HorizontalAlignment="Stretch"
                           SelectionChanged="OnLanguageChanged">
-                    <ComboBoxItem Content="System" />
-                    <ComboBoxItem Content="Español" />
-                    <ComboBoxItem Content="English" />
+                    <ComboBoxItem x:Uid="LanguageSystem" />
+                    <ComboBoxItem x:Uid="LanguageSpanish" />
+                    <ComboBoxItem x:Uid="LanguageEnglish" />
                 </ComboBox>
-                <TextBlock Text="Language changes take full effect after restarting the app."
+                <TextBlock x:Uid="LanguageRestart"
                            Style="{StaticResource CaptionTextBlockStyle}"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
             </StackPanel>
 
             <!-- License / tier -->
             <StackPanel Spacing="8">
-                <TextBlock Text="License" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <TextBlock x:Uid="License" Style="{StaticResource BodyStrongTextBlockStyle}" />
                 <TextBlock x:Name="TierText" Style="{StaticResource CaptionTextBlockStyle}"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
 
                 <StackPanel x:Name="ActivatePanel" Spacing="8">
-                    <TextBox x:Name="LicenseBox" PlaceholderText="PDFS-XXXX-XXXX-XXXX"
-                             Header="Enter a license key to unlock Pro" />
+                    <TextBox x:Name="LicenseBox" x:Uid="LicenseKey" />
                     <StackPanel Orientation="Horizontal" Spacing="8">
-                        <Button x:Name="ActivateButton" Content="Activate" Click="OnActivate" />
+                        <Button x:Name="ActivateButton" x:Uid="Activate" Click="OnActivate" />
                         <TextBlock x:Name="ActivateError" Foreground="{ThemeResource SystemFillColorCriticalBrush}"
                                    VerticalAlignment="Center" Visibility="Collapsed" />
                     </StackPanel>
                 </StackPanel>
 
-                <Button x:Name="DeactivateButton" Content="Deactivate Pro" Click="OnDeactivate"
+                <Button x:Name="DeactivateButton" x:Uid="Deactivate" Click="OnDeactivate"
                         Visibility="Collapsed" />
             </StackPanel>
 
             <!-- Output filename suffix -->
             <StackPanel Spacing="4">
-                <TextBlock Text="Signed file name suffix" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                <TextBox x:Name="SuffixBox" PlaceholderText="-firmado" />
-                <TextBlock Text="Appended to the default save name: name + suffix + .pdf"
+                <TextBlock x:Uid="Suffix" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <TextBox x:Name="SuffixBox" x:Uid="SuffixBox" />
+                <TextBlock x:Uid="SuffixHelp"
                            Style="{StaticResource CaptionTextBlockStyle}"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
-                <CheckBox x:Name="OpenAfterSignCheck" Content="Open the signed PDF after signing"
+                <CheckBox x:Name="OpenAfterSignCheck" x:Uid="OpenAfterSign"
                           Margin="0,4,0,0" />
-                <TextBlock Text="Opens the result in your default PDF viewer and keeps the original loaded, so you can sign it again."
+                <TextBlock x:Uid="OpenAfterSignHelp"
                            Style="{StaticResource CaptionTextBlockStyle}"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
             </StackPanel>
 
             <!-- About -->
             <StackPanel Spacing="2">
-                <TextBlock Text="About" Style="{StaticResource BodyStrongTextBlockStyle}" />
-                <TextBlock Text="PDF Local Cert for Windows" Style="{StaticResource CaptionTextBlockStyle}" />
+                <TextBlock x:Uid="About" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                <TextBlock x:Uid="AboutApp" Style="{StaticResource CaptionTextBlockStyle}" />
                 <TextBlock x:Name="AboutText" Style="{StaticResource CaptionTextBlockStyle}"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
             </StackPanel>
