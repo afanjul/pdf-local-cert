@@ -59,16 +59,12 @@ pub fn prepare(req: PrepareReq) -> Result<PrepareResp, CoreErr> {
     // update. We skip this when the document already carries a signature (detected
     // by a `/ByteRange` entry), because rewriting the base bytes would break the
     // byte ranges — and thus the validity — of any existing signature.
-    let bytes = if has_existing_signature(&raw) {
-        raw
+    let (bytes, doc) = if has_existing_signature(&raw) {
+        (raw, doc)
     } else {
         match normalize_pdf(&mut doc) {
-            Some(clean) => {
-                doc = Document::load_mem(&clean)
-                    .map_err(|e| cerr("BAD_PDF", format!("reparse normalized: {e}")))?;
-                clean
-            }
-            None => raw, // normalization failed: fall back to the original bytes
+            Some(clean) => reparse_normalized_or_original(clean, raw, doc),
+            None => (raw, doc), // normalization failed: fall back to the original bytes
         }
     };
 
@@ -381,6 +377,17 @@ fn normalize_pdf(doc: &mut Document) -> Option<Vec<u8>> {
         return None;
     }
     Some(buf)
+}
+
+fn reparse_normalized_or_original(
+    clean: Vec<u8>,
+    raw: Vec<u8>,
+    original_doc: Document,
+) -> (Vec<u8>, Document) {
+    match Document::load_mem(&clean) {
+        Ok(doc) => (clean, doc),
+        Err(_) => (raw, original_doc),
+    }
 }
 
 fn object_block(id: u32, gen: u16, body: &[u8]) -> Vec<u8> {
@@ -1138,4 +1145,23 @@ fn parse_back(bytes: &[u8]) -> Object {
         }
     }
     Object::Null
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn invalid_normalized_pdf_falls_back_to_original() {
+        let raw = include_bytes!("../../protocol/vectors/sample-unsigned.pdf").to_vec();
+        let original_doc = Document::load_mem(&raw).expect("fixture parses");
+
+        let (bytes, _) = reparse_normalized_or_original(
+            b"%PDF-1.7\ninvalid normalized bytes".to_vec(),
+            raw.clone(),
+            original_doc,
+        );
+
+        assert_eq!(bytes, raw);
+    }
 }
