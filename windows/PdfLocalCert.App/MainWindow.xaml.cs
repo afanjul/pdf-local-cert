@@ -74,8 +74,6 @@ public sealed partial class MainWindow : Window
         ViewModel.ClearDocument();
         ViewModel.VisibleSignature = false;
         NewButton.IsEnabled = false;
-        VerifyButton.IsEnabled = false;
-        SignButton.IsEnabled = false;
     }
 
     // ── Drag-and-drop a PDF onto the page area ───────────────────────────────
@@ -303,8 +301,6 @@ public sealed partial class MainWindow : Window
             PagesItems.ItemsSource = pages;
             ViewModel.FilePath = path;
             NewButton.IsEnabled = true;
-            VerifyButton.IsEnabled = true;
-            SignButton.IsEnabled = true;
             ViewModel.StatusText = $"{System.IO.Path.GetFileName(path)} — {pages.Count} page(s)";
         }
         catch (Exception ex)
@@ -501,12 +497,14 @@ public sealed partial class MainWindow : Window
             : "Visible signature off (an invisible, whole-document signature will be used).";
         if (!on && PagesItems.ItemsSource is IEnumerable<RenderedPage> pages)
             foreach (var p in pages) p.ClearBox();
+        DrawBoxTip.IsOpen = on;
     }
 
     private void OnPagePointerPressed(object sender, PointerRoutedEventArgs e)
     {
         if (!VisibleSigToggle.IsOn) return;
         if (sender is not Canvas canvas || canvas.Tag is not RenderedPage page) return;
+        DrawBoxTip.IsOpen = false;
 
         // Only one box across the document: clear any previous placement.
         if (PagesItems.ItemsSource is IEnumerable<RenderedPage> all)

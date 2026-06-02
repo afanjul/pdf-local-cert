@@ -15,10 +15,6 @@
         <CommandBar Grid.Row="0" DefaultLabelPosition="Right" HorizontalAlignment="Left" Background="Transparent">
             <AppBarButton x:Name="OpenButton" x:Uid="OpenButton" Icon="OpenFile" Label="Open PDF" Click="OnOpenClicked" />
             <AppBarButton x:Name="NewButton" Icon="Add" Label="New" Click="OnNewClicked" IsEnabled="False" />
-            <AppBarButton x:Name="SignButton" x:Uid="SignButton" Icon="Edit" Label="Sign" Click="OnSignClicked" IsEnabled="False" />
-            <AppBarButton x:Name="VerifyButton" x:Uid="VerifyButton" Icon="Permissions" Label="Verify" Click="OnVerifyClicked" IsEnabled="False" />
-            <AppBarSeparator />
-            <AppBarButton x:Name="PingButton" x:Uid="PingButton" Icon="Sync" Label="Ping core" Click="OnPingClicked" />
             <AppBarButton x:Name="SettingsButton" x:Uid="SettingsButton" Icon="Setting" Label="Settings" Click="OnSettingsClicked" />
         </CommandBar>
 
@@ -151,6 +147,12 @@
                                                   AutomationProperties.AutomationId="SignAllToggle"
                                                   IsOn="{x:Bind ViewModel.SignAllPages, Mode=TwoWay}"
                                                   Visibility="{x:Bind ViewModel.SignAllVisibility, Mode=OneWay}" />
+                                    <TeachingTip x:Name="DrawBoxTip"
+                                                 Target="{x:Bind VisibleSigToggle}"
+                                                 Title="Place the signature"
+                                                 Subtitle="Drag a box on the page where the signature should appear."
+                                                 PreferredPlacement="Bottom"
+                                                 IsLightDismissEnabled="True" />
                                 </StackPanel>
 
                                 <!-- Appearance editor (visible signature only) -->
@@ -266,12 +268,14 @@
                                     AutomationProperties.AutomationId="SignAndSaveButton"
                                     Style="{StaticResource AccentButtonStyle}"
                                     HorizontalAlignment="Stretch"
+                                    Padding="16,12"
                                     IsEnabled="{x:Bind ViewModel.CanSign, Mode=OneWay}"
                                     Click="OnSignClicked">
                                 <StackPanel Orientation="Horizontal" Spacing="8">
                                     <ProgressRing Width="16" Height="16"
                                                   IsActive="{x:Bind ViewModel.IsSigning, Mode=OneWay}" />
-                                    <TextBlock Text="Sign and save" />
+                                    <FontIcon Glyph="&#xE70F;" FontSize="16" />
+                                    <TextBlock Text="Sign and save" FontWeight="SemiBold" FontSize="15" />
                                 </StackPanel>
                             </Button>
                         </StackPanel>
