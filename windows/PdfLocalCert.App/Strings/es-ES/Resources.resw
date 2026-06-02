@@ -80,7 +80,7 @@
   <data name="AddFiles.Content"><value>Agregar archivos…</value></data>
   <data name="Clear.Content"><value>Limpiar</value></data>
   <data name="DragMultiplePdfs.Text"><value>Arrastra múltiples PDFs aquí</value></data>
-  <data name="SignAll.Content"><value>Firmar todo</value></data>
+  <data name="SignAll.Text"><value>Firmar todo</value></data>
   <data name="Reverify.Content"><value>Verificar de nuevo</value></data>
   <data name="NewestFirst.Content"><value>Más recientes primero</value></data>
   <data name="OnlyInvalid.Content"><value>Solo inválidos</value></data>
