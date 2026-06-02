@@ -125,6 +125,14 @@ public sealed partial class AppViewModel : ObservableObject
     public Visibility LogoClearVisibility => HasLogo ? Visibility.Visible : Visibility.Collapsed;
     public string LogoName => HasLogo ? System.IO.Path.GetFileName(LogoPath)! : "No logo chosen";
 
+    /// <summary>Decoded logo bitmap for the sidebar preview. Set from code-behind off the
+    /// picked StorageFile (a packaged app can't load an arbitrary path via Uri).</summary>
+    [ObservableProperty]
+    [NotifyPropertyChangedFor(nameof(LogoPreviewVisibility))]
+    private Microsoft.UI.Xaml.Media.ImageSource? _logoImageSource;
+
+    public Visibility LogoPreviewVisibility => LogoImageSource is not null ? Visibility.Visible : Visibility.Collapsed;
+
     public Visibility LabelToggleVisibility => ShowName ? Visibility.Visible : Visibility.Collapsed;
     public Visibility CustomLabelVisibility => ShowName && ShowLabel ? Visibility.Visible : Visibility.Collapsed;
     public Visibility ReasonFieldVisibility => ShowReason ? Visibility.Visible : Visibility.Collapsed;

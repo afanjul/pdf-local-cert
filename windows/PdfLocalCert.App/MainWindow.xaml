@@ -161,13 +161,19 @@
                                     <Border CornerRadius="6" MinHeight="56" Padding="8"
                                             Background="{x:Bind ViewModel.PreviewBackgroundBrush, Mode=OneWay}"
                                             BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
-                                        <ItemsControl ItemsSource="{x:Bind ViewModel.PreviewLines, Mode=OneWay}">
-                                            <ItemsControl.ItemTemplate>
-                                                <DataTemplate x:DataType="x:String">
-                                                    <TextBlock Text="{x:Bind}" FontSize="12" Foreground="Black" TextWrapping="Wrap" />
-                                                </DataTemplate>
-                                            </ItemsControl.ItemTemplate>
-                                        </ItemsControl>
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Image Source="{x:Bind ViewModel.LogoImageSource, Mode=OneWay}"
+                                                   Visibility="{x:Bind ViewModel.LogoPreviewVisibility, Mode=OneWay}"
+                                                   Stretch="Uniform" MaxWidth="64" VerticalAlignment="Center" />
+                                            <ItemsControl VerticalAlignment="Center"
+                                                          ItemsSource="{x:Bind ViewModel.PreviewLines, Mode=OneWay}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="x:String">
+                                                        <TextBlock Text="{x:Bind}" FontSize="12" Foreground="Black" TextWrapping="Wrap" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
                                     </Border>
 
                                     <!-- Content -->

@@ -60,6 +60,11 @@
                 <TextBlock Text="Appended to the default save name: name + suffix + .pdf"
                            Style="{StaticResource CaptionTextBlockStyle}"
                            Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                <CheckBox x:Name="OpenAfterSignCheck" Content="Open the signed PDF after signing"
+                          Margin="0,4,0,0" />
+                <TextBlock Text="Opens the result in your default PDF viewer and keeps the original loaded, so you can sign it again."
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
             </StackPanel>
 
             <!-- About -->

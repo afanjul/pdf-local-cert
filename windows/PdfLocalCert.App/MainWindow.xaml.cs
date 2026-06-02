@@ -139,10 +139,25 @@ public sealed partial class MainWindow : Window
         foreach (var ext in new[] { ".png", ".jpg", ".jpeg", ".bmp", ".gif" }) picker.FileTypeFilter.Add(ext);
         InitializeWithWindow.Initialize(picker, WindowNative.GetWindowHandle(this));
         var file = await picker.PickSingleFileAsync();
-        if (file is not null) ViewModel.LogoPath = file.Path;
+        if (file is null) return;
+        ViewModel.LogoPath = file.Path;
+
+        // Decode for the sidebar preview off the picker-granted StorageFile stream.
+        try
+        {
+            var bmp = new Microsoft.UI.Xaml.Media.Imaging.BitmapImage();
+            using var stream = await file.OpenAsync(Windows.Storage.FileAccessMode.Read);
+            await bmp.SetSourceAsync(stream);
+            ViewModel.LogoImageSource = bmp;
+        }
+        catch { ViewModel.LogoImageSource = null; }
     }
 
-    private void OnClearLogo(object sender, RoutedEventArgs e) => ViewModel.LogoPath = null;
+    private void OnClearLogo(object sender, RoutedEventArgs e)
+    {
+        ViewModel.LogoPath = null;
+        ViewModel.LogoImageSource = null;
+    }
 
     // ── Batch ────────────────────────────────────────────────────────────────
 
@@ -412,8 +427,18 @@ public sealed partial class MainWindow : Window
             await ShowDialog("Signed",
                 $"Signature created.\n\nSigner: {result.SignerCommonName}\nLevel: {result.PadesLevel}\n\nSaved to:\n{finalPath}");
 
-            // Reload the signed output so Verify reflects it immediately.
-            await LoadAsync(finalPath);
+            // Show the result in the default PDF viewer (separate window) when enabled.
+            // The app keeps the *original* loaded and never opens the output itself, so
+            // the user can sign again elsewhere and overwrite the output without locks.
+            if (SettingsDialog.OpenAfterSign)
+            {
+                try
+                {
+                    var signedFile = await Windows.Storage.StorageFile.GetFileFromPathAsync(finalPath);
+                    await Windows.System.Launcher.LaunchFileAsync(signedFile);
+                }
+                catch { /* no default viewer / launch refused — leave the file on disk */ }
+            }
         }
         catch (SigningException ex)
         {

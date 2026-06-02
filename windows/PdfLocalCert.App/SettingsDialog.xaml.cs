@@ -15,10 +15,17 @@ public sealed partial class SettingsDialog : ContentDialog
 
     public const string SuffixSetting = "settings.signedSuffix";
     public const string DefaultSuffix = "-firmado";
+    public const string OpenAfterSignSetting = "settings.openAfterSign";
 
     /// <summary>Effective suffix for callers without a dialog instance.</summary>
     public static string CurrentSuffix =>
         ApplicationData.Current.LocalSettings.Values[SuffixSetting] as string ?? DefaultSuffix;
+
+    /// <summary>Open the signed PDF in the default viewer after signing (default true).
+    /// Opening it externally keeps the original loaded so the user can sign again and
+    /// avoids the app holding a lock on the output file.</summary>
+    public static bool OpenAfterSign =>
+        ApplicationData.Current.LocalSettings.Values[OpenAfterSignSetting] as bool? ?? true;
 
     public SettingsDialog(LicenseManager license, string? paywallReason = null)
     {
@@ -38,6 +45,7 @@ public sealed partial class SettingsDialog : ContentDialog
         _ready = true;   // ignore the SelectionChanged fired while populating above
 
         SuffixBox.Text = CurrentSuffix;
+        OpenAfterSignCheck.IsChecked = OpenAfterSign;
         AboutText.Text = "Local PDF signing. Your private key never leaves the Windows certificate store.";
         RefreshTier();
     }
@@ -103,5 +111,6 @@ public sealed partial class SettingsDialog : ContentDialog
     {
         // Persist the suffix on close (empty falls back to default at read time).
         ApplicationData.Current.LocalSettings.Values[SuffixSetting] = SuffixBox.Text.Trim();
+        ApplicationData.Current.LocalSettings.Values[OpenAfterSignSetting] = OpenAfterSignCheck.IsChecked == true;
     }
 }
