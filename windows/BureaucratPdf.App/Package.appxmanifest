@@ -13,14 +13,14 @@
   IgnorableNamespaces="uap rescap">
 
   <Identity
-    Name="Palbin.BureaucratPdf"
+    Name="Warelabs.BureaucratPdf"
     Publisher="CN=Bureaucrat PDF (Dev)"
     Version="1.0.16.0"
     ProcessorArchitecture="x64" />
 
   <Properties>
     <DisplayName>Bureaucrat PDF</DisplayName>
-    <PublisherDisplayName>Palbin</PublisherDisplayName>
+    <PublisherDisplayName>Warelabs</PublisherDisplayName>
     <Logo>Images\StoreLogo.png</Logo>
   </Properties>
 

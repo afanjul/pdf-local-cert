@@ -3,7 +3,7 @@ import Security
 
 /// Minimal Keychain generic-password store for the license token. 🔒
 enum LicenseKeychain {
-    private static let service = "com.palbin.bureaucratpdf.license"
+    private static let service = "dev.warelabs.bureaucratpdf.license"
     private static let account = "license-key"
 
     static func read() -> String? {

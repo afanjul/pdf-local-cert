@@ -31,7 +31,7 @@ Deviations from the original plan (intentional, for solo speed):
 
 ### 0.1 Project skeleton
 - [x] SwiftPM executable `BureaucratPdf`, macOS 14, Swift 6 strict concurrency. *(not an .xcodeproj)*
-- [x] Bundle ID `com.palbin.bureaucratpdf`; display name set. Icon: placeholder/none yet.
+- [x] Bundle ID `dev.warelabs.bureaucratpdf`; display name set. Icon: placeholder/none yet.
 - [x] Init Rust crate `bureaucratpdf-core`.
 - [ ] universal2 build (`aarch64` + `x86_64` → `lipo`) — **arm64 only so far**.
 - [x] Wire core into `.app/Contents/Helpers/` (via `scripts/build.sh`, not an Xcode phase).

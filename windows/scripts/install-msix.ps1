@@ -46,7 +46,7 @@ Write-Host "Importing $Cer into LocalMachine\TrustedPeople ..."
 Import-Certificate -FilePath $Cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
 
 # --- install (reinstall-safe) -----------------------------------------------
-$pkgName = "Palbin.BureaucratPdf"
+$pkgName = "Warelabs.BureaucratPdf"
 $existing = Get-AppxPackage -Name $pkgName -ErrorAction SilentlyContinue
 if ($existing) {
     Write-Host "Removing existing install ($($existing.Version)) ..."

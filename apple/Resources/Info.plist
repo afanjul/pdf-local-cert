@@ -7,7 +7,7 @@
     <key>CFBundleDisplayName</key>
     <string>Bureaucrat PDF</string>
     <key>CFBundleIdentifier</key>
-    <string>com.palbin.bureaucratpdf</string>
+    <string>dev.warelabs.bureaucratpdf</string>
     <key>CFBundleVersion</key>
     <string>2</string>
     <key>CFBundleShortVersionString</key>

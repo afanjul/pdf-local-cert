@@ -12,7 +12,7 @@
 | Item | Value |
 |------|-------|
 | Product name | Bureaucrat PDF |
-| Bundle identifier | `com.palbin.bureaucratpdf` |
+| Bundle identifier | `dev.warelabs.bureaucratpdf` |
 | Display name | Bureaucrat PDF |
 | Sidecar binary | `bureaucratpdf-core` |
 | Verifier domain | `verify.bureaucratpdf.app` (placeholder) |

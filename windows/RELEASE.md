@@ -69,7 +69,7 @@ Then install: double-click `BureaucratPdf.msix` (App Installer) or
    reputation more slowly. For a signing product like this, EV is the recommended track.
 2. **Set the manifest identity to the real publisher.** Update `<Identity Publisher=...>`
    in `Package.appxmanifest` to the certificate's exact subject DN (e.g.
-   `CN=Palbin SL, O=Palbin SL, L=..., S=..., C=ES`). The `Name`/`Version` stay as-is.
+   `CN=Warelabs Dev, O=Warelabs Dev, L=..., S=..., C=ES`). The `Name`/`Version` stay as-is.
 3. **Sign with the production cert** (token-backed certs are selected by thumbprint, not
    a `.pfx`):
    ```powershell
