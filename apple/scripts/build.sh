@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Build PDF Local Cert.app: Rust sidecar + SwiftUI shell, assembled and code-signed.
+# Build Bureaucrat PDF.app: Rust sidecar + SwiftUI shell, assembled and code-signed.
 #
 # Monorepo layout: the shared Rust core lives at <repo>/core; the Apple shell
 # (this script, Package.swift, Sources/, Resources/) lives under <repo>/apple.
@@ -14,8 +14,8 @@ APPLE_ROOT="$(cd "$(dirname "$0")/.." && pwd)"   # <repo>/apple
 REPO_ROOT="$(cd "$APPLE_ROOT/.." && pwd)"        # <repo>
 cd "$APPLE_ROOT"
 
-APP_NAME="PDF Local Cert"
-EXEC_NAME="PDFLocalCert"
+APP_NAME="Bureaucrat PDF"
+EXEC_NAME="BureaucratPdf"
 BUNDLE="$APPLE_ROOT/build/${APP_NAME}.app"
 CORE_DIR="$REPO_ROOT/core"
 SIGN_ID="${SIGN_ID:--}"            # default: ad-hoc
@@ -31,8 +31,8 @@ echo "▸ Assembling ${BUNDLE}…"
 rm -rf "$BUNDLE"
 mkdir -p "$BUNDLE/Contents/MacOS" "$BUNDLE/Contents/Helpers" "$BUNDLE/Contents/Resources"
 
-cp "$APPLE_ROOT/.build/release/PDFLocalCert"        "$BUNDLE/Contents/MacOS/${EXEC_NAME}"
-cp "$CORE_DIR/target/release/pdflocalcert-core"     "$BUNDLE/Contents/Helpers/pdflocalcert-core"
+cp "$APPLE_ROOT/.build/release/BureaucratPdf"        "$BUNDLE/Contents/MacOS/${EXEC_NAME}"
+cp "$CORE_DIR/target/release/bureaucratpdf-core"     "$BUNDLE/Contents/Helpers/bureaucratpdf-core"
 cp "$APPLE_ROOT/Resources/Info.plist"               "$BUNDLE/Contents/Info.plist"
 cp "$APPLE_ROOT/Resources/AppIcon.icns"             "$BUNDLE/Contents/Resources/AppIcon.icns"
 cp "$APPLE_ROOT/Resources/drop-icon-base.png"       "$BUNDLE/Contents/Resources/drop-icon-base.png"
@@ -43,9 +43,9 @@ for lproj in "$APPLE_ROOT"/Resources/*.lproj; do
 done
 
 echo "▸ Code signing (id: ${SIGN_ID})…"
-ENT="$APPLE_ROOT/Resources/PDFLocalCert.entitlements"
+ENT="$APPLE_ROOT/Resources/BureaucratPdf.entitlements"
 codesign --force --options runtime --timestamp=none \
-    --sign "$SIGN_ID" "$BUNDLE/Contents/Helpers/pdflocalcert-core"
+    --sign "$SIGN_ID" "$BUNDLE/Contents/Helpers/bureaucratpdf-core"
 codesign --force --options runtime --timestamp=none \
     --entitlements "$ENT" \
     --sign "$SIGN_ID" "$BUNDLE/Contents/MacOS/${EXEC_NAME}"

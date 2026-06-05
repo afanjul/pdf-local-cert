@@ -2,24 +2,24 @@
 import PackageDescription
 
 let package = Package(
-    name: "PDFLocalCert",
+    name: "BureaucratPdf",
     platforms: [.macOS(.v14)],
     targets: [
         // Pure-logic library (coordinate math, geometry). Unit-testable in isolation,
         // no UI dependencies — the highest-risk Phase 2 code lives here.
         .target(
-            name: "PDFLocalCertKit",
-            path: "Sources/PDFLocalCertKit"
+            name: "BureaucratPdfKit",
+            path: "Sources/BureaucratPdfKit"
         ),
         .executableTarget(
-            name: "PDFLocalCert",
-            dependencies: ["PDFLocalCertKit"],
-            path: "Sources/PDFLocalCert"
+            name: "BureaucratPdf",
+            dependencies: ["BureaucratPdfKit"],
+            path: "Sources/BureaucratPdf"
         ),
         .testTarget(
-            name: "PDFLocalCertKitTests",
-            dependencies: ["PDFLocalCertKit"],
-            path: "Tests/PDFLocalCertKitTests"
+            name: "BureaucratPdfKitTests",
+            dependencies: ["BureaucratPdfKit"],
+            path: "Tests/BureaucratPdfKitTests"
         ),
     ]
 )

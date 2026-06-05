@@ -1,6 +1,6 @@
 # Protocol — shared core contract
 
-The Rust core (`core/`, shipped as `pdflocalcert-core` / `pdflocalcert-core.exe`) is
+The Rust core (`core/`, shipped as `bureaucratpdf-core` / `bureaucratpdf-core.exe`) is
 driven by every native shell over a **line-delimited JSON protocol** on stdin/stdout:
 one JSON request object per line in, one JSON response object per line out. The core is
 stateless across processes; a `handle` ties a `prepare` to its `finalize` within one run.

@@ -304,7 +304,7 @@ pub fn finalize(req: FinalizeReq) -> Result<FinalizeResp, CoreErr> {
         Some(url) if !url.is_empty() => match tsa::fetch_token(url, &signature) {
             Ok(token) => (Some(token), "B-T"),
             Err(e) => {
-                eprintln!("[pdflocalcert-core] TSA failed, falling back to B-B: {e}");
+                eprintln!("[bureaucratpdf-core] TSA failed, falling back to B-B: {e}");
                 (None, "B-B")
             }
         },
@@ -341,9 +341,9 @@ fn load_state(handle: &str) -> Result<State, CoreErr> {
     // the same work_dir, so the state file sits next to working pdf. We stored
     // absolute paths inside; we recover by reading from the handle-derived name
     // in the OS temp dir tree the shell uses. The shell always finalizes with the
-    // working dir set, so we look relative to env PDFLOCALCERT_WORK if present.
+    // working dir set, so we look relative to env BUREAUCRATPDF_WORK if present.
     let dirs = [
-        std::env::var("PDFLOCALCERT_WORK").ok(),
+        std::env::var("BUREAUCRATPDF_WORK").ok(),
         Some(std::env::temp_dir().to_string_lossy().into()),
     ];
     for d in dirs.into_iter().flatten() {

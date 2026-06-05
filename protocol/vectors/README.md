@@ -2,7 +2,7 @@
 
 Golden fixtures the core is asserted against on every platform. Driven by
 [`core/tests/conformance.rs`](../../core/tests/conformance.rs) (`cargo test -p
-pdflocalcert-core --test conformance`), run in CI on macos-latest and
+bureaucratpdf-core --test conformance`), run in CI on macos-latest and
 windows-latest so the two shells cannot silently desync.
 
 ## Files

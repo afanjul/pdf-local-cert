@@ -16,7 +16,7 @@ Decisions (locked):
 
 ## Reference: the macOS app (source of truth)
 
-`apple/Sources/PDFLocalCert/`:
+`apple/Sources/BureaucratPdf/`:
 
 - `ContentView` — toolbar `Segmented` **Sign / Batch / Verify**; "New" + Preferences.
 - `SignTab` — `HSplitView`: PDF/drop-zone left, options sidebar right.
@@ -51,7 +51,7 @@ Decisions (locked):
 
 macOS `PlacementSpec` carries `fontSize, wrap, textX, textW, images[]`
 (`PlacedImageSpec` = rgba + px + rect) for logo/QR, with layout from the shared
-`SignatureComposer`. Windows `windows/PdfLocalCert.Core/SigningModels.cs`
+`SignatureComposer`. Windows `windows/BureaucratPdf.Core/SigningModels.cs`
 `PlacementSpec` only has `Page,X,Y,W,H,Lines,Border,Background`. The **same Rust
 core** already accepts the richer fields, so 7.7 extends the C# model + the JSON
 `SigningService` emits, then ports the composer so preview == embedded output.

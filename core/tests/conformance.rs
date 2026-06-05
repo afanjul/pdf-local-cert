@@ -1,6 +1,6 @@
 //! Protocol conformance harness.
 //!
-//! Drives the built `pdflocalcert-core` binary over its line-delimited JSON
+//! Drives the built `bureaucratpdf-core` binary over its line-delimited JSON
 //! protocol and asserts the response *shapes* match the shared contract in
 //! `../protocol`. Runs on every platform in CI (macos-latest + windows-latest)
 //! so the two shells cannot silently desync (see design D7).
@@ -32,7 +32,7 @@ fn vectors_dir() -> PathBuf {
 
 /// Send one request line to the core, return the parsed one-line JSON response.
 fn roundtrip(req: &Value) -> Value {
-    let bin = env!("CARGO_BIN_EXE_pdflocalcert-core");
+    let bin = env!("CARGO_BIN_EXE_bureaucratpdf-core");
     let mut child = Command::new(bin)
         .stdin(Stdio::piped())
         .stdout(Stdio::piped())

@@ -1,10 +1,10 @@
 ## Context
 
-PDF Local Cert is a macOS app with a deliberately portable architecture:
+Bureaucrat PDF is a macOS app with a deliberately portable architecture:
 
-- **Rust core** (`core/`, `pdflocalcert-core`): does all PDF surgery (incremental update, `/ByteRange`, `/Contents` placeholder), CMS assembly, RFC 3161 timestamping, and verification. It speaks a **line-delimited JSON protocol** on stdin/stdout (`prepare` → `finalize` → `verify` → `ping`). Pure cross-platform Rust crates (lopdf, cms, x509-cert, rsa, sha2, ureq, flate2) — no Apple dependency.
-- **SwiftUI shell** (`Sources/PDFLocalCert`): UI + the one platform-specific responsibility — talking to the system crypto store. It spawns the core via `Process()`/`Pipe` (`CoreClient.swift`), enumerates Keychain identities (`IdentityStore.swift`), and signs the core-provided `SignedAttributes` digest with `SecKeyCreateSignature` (`CallbackSigner` in `SigningCoordinator.swift`). The private key never leaves the Keychain — the **external-signer pattern**.
-- **Pure-logic kit** (`PDFLocalCertKit`): `CoordinateMapper` geometry, unit-tested in isolation.
+- **Rust core** (`core/`, `bureaucratpdf-core`): does all PDF surgery (incremental update, `/ByteRange`, `/Contents` placeholder), CMS assembly, RFC 3161 timestamping, and verification. It speaks a **line-delimited JSON protocol** on stdin/stdout (`prepare` → `finalize` → `verify` → `ping`). Pure cross-platform Rust crates (lopdf, cms, x509-cert, rsa, sha2, ureq, flate2) — no Apple dependency.
+- **SwiftUI shell** (`Sources/BureaucratPdf`): UI + the one platform-specific responsibility — talking to the system crypto store. It spawns the core via `Process()`/`Pipe` (`CoreClient.swift`), enumerates Keychain identities (`IdentityStore.swift`), and signs the core-provided `SignedAttributes` digest with `SecKeyCreateSignature` (`CallbackSigner` in `SigningCoordinator.swift`). The private key never leaves the Keychain — the **external-signer pattern**.
+- **Pure-logic kit** (`BureaucratPdfKit`): `CoordinateMapper` geometry, unit-tested in isolation.
 
 The external-signer design means the system-crypto surface is tiny: the core hands back a digest, the shell signs it, the core splices the CMS. Everything platform-specific is the UI plus that one signing callback. This is exactly what makes a second native shell cheap.
 
@@ -40,7 +40,7 @@ WinUI 3 is the direct analog of SwiftUI: C#≈Swift, XAML≈View DSL, Fluent≈H
 - **Risk hedge:** if WinUI 3 tooling proves painful, WPF is a drop-in fallback for the same C# logic and CNG/Process code — only the view layer changes.
 
 ### D3 — Keep the sidecar (subprocess + JSON), do NOT switch Windows to in-process FFI
-Windows allows `CreateProcess`, so the existing `Process()`+pipe model ports directly to `System.Diagnostics.Process` with redirected stdin/stdout. The same `pdflocalcert-core.exe` is driven byte-for-byte like the macOS build drives it.
+Windows allows `CreateProcess`, so the existing `Process()`+pipe model ports directly to `System.Diagnostics.Process` with redirected stdin/stdout. The same `bureaucratpdf-core.exe` is driven byte-for-byte like the macOS build drives it.
 - **Why over FFI/static lib:** the subprocess boundary is the cheapest way to reuse the core unchanged and isolate crashes; FFI would mean a C ABI and per-platform linking with no parity payoff. (FFI was only forced on iOS, which bans fork/exec — not relevant here.)
 - **Trade-off:** process spawn per request (already the macOS behavior); negligible for a desktop signing flow.
 
@@ -77,7 +77,7 @@ macOS uses a Keychain generic-password (`LicenseManager.swift`). Windows v1 stor
 ## Migration Plan
 
 1. **Restructure** on the `windows-port` branch: move Apple shell into `apple/`, keep `core/`, add `protocol/`; fix all path references; prove the macOS `.app` still builds and runs. Merge to `main` (platform layout only, no behavior change).
-2. **Cross-platform core**: add the Windows target + cargo-xwin; produce `pdflocalcert-core.exe`; add `protocol/` vectors; CI runs them on both OSes.
+2. **Cross-platform core**: add the Windows target + cargo-xwin; produce `bureaucratpdf-core.exe`; add `protocol/` vectors; CI runs them on both OSes.
 3. **Windows crypto spike**: standalone C# console that enumerates the cert store, drives the core over stdio for a real `prepare`→CNG-sign→`finalize` on a test PDF — de-risks D4/the ECDSA format issue before any UI.
 4. **Windows shell**: build the WinUI 3 app feature-by-feature (open/view → place → pick cert → sign → verify → settings/license).
 5. **Package + CI**: MSIX, Authenticode (dev cert), GitHub Actions matrix gating merges.

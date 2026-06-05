@@ -1,4 +1,4 @@
-//! pdflocalcert-core — signing sidecar for PDF Local Cert.
+//! bureaucratpdf-core — signing sidecar for Bureaucrat PDF.
 //!
 //! Speaks a line-delimited JSON protocol on stdin/stdout. One request per line,
 //! one response per line. The private key never reaches this process: `prepare`

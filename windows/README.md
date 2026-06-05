@@ -1,10 +1,10 @@
 # Windows shell (C# / WinUI 3)
 
-Native Windows 10 (17763+) / 11 shell for PDF Local Cert, at feature parity with the
+Native Windows 10 (17763+) / 11 shell for Bureaucrat PDF, at feature parity with the
 macOS app: open/view a PDF, place visible signatures, pick a certificate from the Windows
 certificate store, sign (PAdES B-B / B-T with a TSA), and verify.
 
-It drives the **same** shared Rust core as the Apple shell, spawning `pdflocalcert-core.exe`
+It drives the **same** shared Rust core as the Apple shell, spawning `bureaucratpdf-core.exe`
 via `System.Diagnostics.Process` and talking the line-delimited JSON protocol in
 [`../protocol`](../protocol). The private key never leaves the Windows cert store — the
 shell only signs the core-provided digest via CNG (external-signer pattern).
@@ -13,18 +13,18 @@ See `openspec/changes/windows-port/` for the full design. Scaffolded in Phase 4.
 
 ## Build & run (dev)
 
-Three projects, tied together by `PdfLocalCert.sln`:
+Three projects, tied together by `BureaucratPdf.sln`:
 
 | Project | What |
 |---|---|
-| `PdfLocalCert.Core` | UI-free shared logic (CoreClient, CoordinateMapper, signing services). net8.0, unit-tested on any host. |
-| `PdfLocalCert.App` | WinUI 3 desktop shell. Ships as `PdfLocalCert.exe`. |
-| `PdfLocalCert.Core.Tests` | Unit tests for Core. Run on any host. |
+| `BureaucratPdf.Core` | UI-free shared logic (CoreClient, CoordinateMapper, signing services). net8.0, unit-tested on any host. |
+| `BureaucratPdf.App` | WinUI 3 desktop shell. Ships as `BureaucratPdf.exe`. |
+| `BureaucratPdf.Core.Tests` | Unit tests for Core. Run on any host. |
 
 Unit tests run anywhere:
 
 ```powershell
-dotnet test windows\PdfLocalCert.Core.Tests
+dotnet test windows\BureaucratPdf.Core.Tests
 ```
 
 The app runs via the **MSIX package** — the supported dev *and* ship path. We do **not**
@@ -37,10 +37,10 @@ its runtime from the MSIX dependency graph, sidestepping both. Build → pack �
 ```powershell
 # 1. publish the payload — MUST be WindowsPackageType=MSIX (a None-typed payload
 #    silently exits inside a package; see scripts\pack-msix.ps1 header)
-dotnet publish windows\PdfLocalCert.App -c Release -r win-x64 `
+dotnet publish windows\BureaucratPdf.App -c Release -r win-x64 `
   --self-contained true -p:WindowsPackageType=MSIX -o <payload>
 
-# 2. pack + dev self-sign  ->  windows\build\PdfLocalCert.msix
+# 2. pack + dev self-sign  ->  windows\build\BureaucratPdf.msix
 & windows\scripts\pack-msix.ps1 -PublishDir <payload>
 
 # 3. install (elevated; one-time cert trust) then launch from the Start menu
@@ -52,7 +52,7 @@ dotnet publish windows\PdfLocalCert.App -c Release -r win-x64 `
 
 ## Phase 3 crypto spike — findings (validated on Win11 VM)
 
-A throwaway spike (removed after its logic was promoted into `PdfLocalCert.Core`; see
+A throwaway spike (removed after its logic was promoted into `BureaucratPdf.Core`; see
 git history `a99dc4a`) drove a real `prepare → CNG sign → finalize → verify` round-trip
 against the cross-compiled core. All paths passed: RSA and ECDSA signing, leaf-first
 chain assembly, and a B-T timestamp from a live RFC 3161 TSA (DigiCert). These findings
@@ -69,7 +69,7 @@ are baked into the `CoreClient` / signer and kept here as rationale:
    `DSASignatureFormat.Rfc3279DerSequence` to `SignData`. (Native in .NET 8 — no
    manual conversion needed, but the format flag is mandatory.)
 
-3. **`finalize` recovers prepare's state via `$PDFLOCALCERT_WORK`.** Each request
+3. **`finalize` recovers prepare's state via `$BUREAUCRATPDF_WORK`.** Each request
    is a fresh process; set that env var to the per-sign work dir on every spawn
    (mirrors the macOS `CoreClient`), or finalize returns `state not found`.
 

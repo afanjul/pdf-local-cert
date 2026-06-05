@@ -1,15 +1,15 @@
 ## ADDED Requirements
 
 ### Requirement: Core builds for Windows
-The Rust core SHALL build for the `x86_64-pc-windows-msvc` target, producing a `pdflocalcert-core.exe` binary, both when cross-compiled from macOS and when built natively on Windows, with no source changes between platforms.
+The Rust core SHALL build for the `x86_64-pc-windows-msvc` target, producing a `bureaucratpdf-core.exe` binary, both when cross-compiled from macOS and when built natively on Windows, with no source changes between platforms.
 
 #### Scenario: Cross-compile from macOS
 - **WHEN** the core is built from macOS targeting `x86_64-pc-windows-msvc` (via cargo-xwin)
-- **THEN** a runnable `pdflocalcert-core.exe` is produced without source modifications
+- **THEN** a runnable `bureaucratpdf-core.exe` is produced without source modifications
 
 #### Scenario: Native Windows build
 - **WHEN** the core is built on a Windows host in release mode
-- **THEN** the build succeeds and produces `pdflocalcert-core.exe`
+- **THEN** the build succeeds and produces `bureaucratpdf-core.exe`
 
 ### Requirement: Protocol parity across platforms
 The core SHALL expose the identical line-delimited JSON protocol (`ping`, `prepare`, `finalize`, `verify`) on stdin/stdout on Windows and macOS, with byte-equivalent request/response shapes.

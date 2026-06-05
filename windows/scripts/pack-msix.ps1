@@ -15,7 +15,7 @@
   The self-contained publish output. IMPORTANT: it MUST be published with
   WindowsPackageType=MSIX, e.g.
 
-    dotnet publish windows/PdfLocalCert.App -c Release -r win-x64 `
+    dotnet publish windows/BureaucratPdf.App -c Release -r win-x64 `
       --self-contained true -p:WindowsPackageType=MSIX -o <PublishDir>
 
   A payload built with WindowsPackageType=None (the loose/dev layout) calls the
@@ -27,12 +27,12 @@
   Path of the .msix to produce.
 
 .EXAMPLE
-  pwsh windows/scripts/pack-msix.ps1 -PublishDir C:\plc-app -OutFile C:\plc\PdfLocalCert.msix
+  pwsh windows/scripts/pack-msix.ps1 -PublishDir C:\plc-app -OutFile C:\plc\BureaucratPdf.msix
 #>
 param(
     [Parameter(Mandatory = $true)] [string] $PublishDir,
-    [string] $OutFile = "$PSScriptRoot\..\build\PdfLocalCert.msix",
-    [string] $CertSubject = "CN=PDF Local Cert (Dev)",
+    [string] $OutFile = "$PSScriptRoot\..\build\BureaucratPdf.msix",
+    [string] $CertSubject = "CN=Bureaucrat PDF (Dev)",
     [string] $PfxPassword = "devsign"
 )
 
@@ -53,7 +53,7 @@ Write-Host "makeappx: $makeappx"
 Write-Host "signtool: $signtool"
 
 if (-not (Test-Path $PublishDir)) { throw "PublishDir not found: $PublishDir" }
-$manifestSrc = Join-Path $PSScriptRoot "..\PdfLocalCert.App\Package.appxmanifest"
+$manifestSrc = Join-Path $PSScriptRoot "..\BureaucratPdf.App\Package.appxmanifest"
 if (-not (Test-Path $manifestSrc)) { throw "manifest not found: $manifestSrc" }
 
 # --- placeholder assets (real icons are a later design task) ----------------
@@ -103,7 +103,7 @@ $cert = Get-ChildItem Cert:\CurrentUser\My | Where-Object { $_.Subject -eq $Cert
 if (-not $cert) {
     $cert = New-SelfSignedCertificate -Type CodeSigningCert -Subject $CertSubject `
         -CertStoreLocation "Cert:\CurrentUser\My" -KeyUsage DigitalSignature `
-        -FriendlyName "PDF Local Cert Dev Signing"
+        -FriendlyName "Bureaucrat PDF Dev Signing"
     Write-Host "created dev cert: $($cert.Thumbprint)"
 } else {
     Write-Host "reusing dev cert: $($cert.Thumbprint)"

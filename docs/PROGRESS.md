@@ -1,4 +1,4 @@
-# PDF Local Cert — Progress & Resume Guide
+# Bureaucrat PDF — Progress & Resume Guide
 
 **Updated:** 2026-05-29 · Read this first when resuming in a fresh session.
 
@@ -12,9 +12,9 @@ Keychain (external/callback signer).
 
 **Phases 2, 3, 4 — DONE (local).** Built and validated this session (pyHanko coverage=ENTIRE_FILE on single/image/multi; single & invisible signing paths byte-behavior unchanged):
 
-- **Phase 2 (place):** `CoordinateMapper` (pure lib `Sources/PDFLocalCertKit/`, unit-tested 10/10: rotation 0/90/180/270 × zoom 25–400%, cropBox offset, round-trip), `SignatureBoxOverlay` (draw/move/resize), page picker (`SignaturePlacementView`). Drawn rect → user space lands exactly on `/Rect`.
+- **Phase 2 (place):** `CoordinateMapper` (pure lib `Sources/BureaucratPdfKit/`, unit-tested 10/10: rotation 0/90/180/270 × zoom 25–400%, cropBox offset, round-trip), `SignatureBoxOverlay` (draw/move/resize), page picker (`SignaturePlacementView`). Drawn rect → user space lands exactly on `/Rect`.
 - **Phase 3 (appearance):** `AppearanceConfig` (name/reason/location/date/label/image/QR/border/transparent) → `AppearanceRenderer` flattens to RGBA → core embeds **Image XObject + grayscale SMask + Form /AP** (`sign.rs` `build_appearance`, FlateDecode via new `flate2` dep). Preview == output by construction (same render fills the drawn box + sidebar). Presets persisted (`PresetStore`, App Support JSON). Licensing: `LicenseManager` (Keychain token) + `PaywallView`; free = invisible/default-visible + 10/mo quota, Pro = everything else.
-- **Phase 4 (scale):** Batch (`Batch.swift`, Pro, per-file status + auto-save `<name>-firmado.pdf`). QR badge (CoreImage, local UUID token, URL `verify.pdflocalcert.app/v/{token}`). Multi-box = **one signature, N widget Kids** (`sign.rs` multi branch, guarded; "firmar en todas las páginas" replicates the drawn box per page via per-page `CoordinateMapper`).
+- **Phase 4 (scale):** Batch (`Batch.swift`, Pro, per-file status + auto-save `<name>-firmado.pdf`). QR badge (CoreImage, local UUID token, URL `verify.bureaucratpdf.app/v/{token}`). Multi-box = **one signature, N widget Kids** (`sign.rs` multi branch, guarded; "firmar en todas las páginas" replicates the drawn box per page via per-page `CoordinateMapper`).
 
 **Tests/validation:** `swift test` (mapper, 10/10). Core oracles: `/tmp/test_pipeline.py` (single), `/tmp/test_image_appearance.py` (image+SMask), `/tmp/test_multibox.py` (2-widget), each + `/tmp/pyhanko_validate.py` → ENTIRE_FILE.
 
@@ -30,14 +30,14 @@ Keychain (external/callback signer).
 
 ## Architecture (two halves, one `.app`)
 
-- **Swift shell** `Sources/PDFLocalCert/` (SwiftPM executable, SwiftUI + PDFKit):
+- **Swift shell** `Sources/BureaucratPdf/` (SwiftPM executable, SwiftUI + PDFKit):
   `AppModel`, `ContentView`/`SignTab`, `VerifierView`, `PDFViewerView`, `DropSupport`,
   `IdentityStore` (+`CallbackSigner`), `SigningCoordinator`, `CoreClient`, `Errors`,
   + Phase 2–4: `SignaturePlacementView`/`SignatureBoxOverlay`, `AppearanceConfig`,
   `AppearanceRenderer`, `AppearanceEditorView`, `PresetStore`/`PresetBar`,
   `LicenseManager`, `PaywallView`, `Batch`.
-- **Pure-logic lib** `Sources/PDFLocalCertKit/` (`CoordinateMapper`) + tests
-  `Tests/PDFLocalCertKitTests/` — `swift test`.
+- **Pure-logic lib** `Sources/BureaucratPdfKit/` (`CoordinateMapper`) + tests
+  `Tests/BureaucratPdfKitTests/` — `swift test`.
 - **Rust sidecar** `core/src/` (hand-rolled DER/CMS, lopdf):
   `main.rs` (JSON line protocol), `protocol.rs`, `sign.rs` (PDF surgery, ByteRange,
   prepare/finalize), `cms.rs` (DER/CMS/SignedAttributes), `tsa.rs` (RFC 3161),
@@ -49,8 +49,8 @@ Keychain (external/callback signer).
 ## Build / run / test
 
 ```sh
-bash apple/scripts/build.sh    # -> apple/build/PDF Local Cert.app (ad-hoc signed)
-open "apple/build/PDF Local Cert.app"
+bash apple/scripts/build.sh    # -> apple/build/Bureaucrat PDF.app (ad-hoc signed)
+open "apple/build/Bureaucrat PDF.app"
 ```
 - **cargo network quirk:** the rtk hook sandboxes a bare `cargo` and breaks crates.io.
   Use absolute path + git index: `scripts/build.sh` sets `CARGO=/opt/homebrew/bin/cargo`
@@ -58,7 +58,7 @@ open "apple/build/PDF Local Cert.app"
   pass `dangerouslyDisableSandbox: true`.
 - **Pipeline test (no Keychain):** `python3 /tmp/test_pipeline.py` (test cert → prepare →
   openssl-sign → finalize → verify). Regenerate cert if `/tmp` cleared:
-  `openssl req -x509 -newkey rsa:2048 -keyout /tmp/tkey.pem -out /tmp/tcert.pem -days 365 -nodes -subj "/CN=Test Signer/O=PDF Local Cert Test/C=ES"; openssl x509 -in /tmp/tcert.pem -outform DER -out /tmp/tcert.der`
+  `openssl req -x509 -newkey rsa:2048 -keyout /tmp/tkey.pem -out /tmp/tcert.pem -days 365 -nodes -subj "/CN=Test Signer/O=Bureaucrat PDF Test/C=ES"; openssl x509 -in /tmp/tcert.pem -outform DER -out /tmp/tcert.der`
 - **Strict validator (Adobe-like):** pyHanko venv `/tmp/pyhanko-venv`, script
   `/tmp/pyhanko_validate.py <pdf>`. The signal is `coverage` = must be `ENTIRE_FILE`.
 

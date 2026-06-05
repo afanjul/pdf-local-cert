@@ -1,0 +1,16 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    Shared, UI-free logic for the Windows shell: coordinate mapping (ported from
+    BureaucratPdfKit.CoordinateMapper) and the core client (ported from the Phase 3
+    spike). net8.0 (not -windows) so it builds and unit-tests on any host.
+  -->
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>BureaucratPdf.Core</RootNamespace>
+  </PropertyGroup>
+
+</Project>

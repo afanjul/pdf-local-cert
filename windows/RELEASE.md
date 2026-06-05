@@ -14,7 +14,7 @@ publisher" warning and lets the package install without a trust dance — exactl
 role Developer ID + notarization plays for the `.app`.
 
 The signing subject (`CN=...`) **must match** the `Publisher` in
-`PdfLocalCert.App/Package.appxmanifest`'s `<Identity>` element, or signing fails with
+`BureaucratPdf.App/Package.appxmanifest`'s `<Identity>` element, or signing fails with
 `error 0x8007000B` (the package identity does not match the signing certificate).
 
 Increment the patch component in that same `<Identity Version>` for every packaged
@@ -31,10 +31,10 @@ cert. Reproduce locally on a Windows host:
 # 1. Create a self-signed code-signing cert whose subject matches the manifest Publisher.
 $cert = New-SelfSignedCertificate `
   -Type CodeSigningCert `
-  -Subject "CN=PDF Local Cert (Dev)" `
+  -Subject "CN=Bureaucrat PDF (Dev)" `
   -CertStoreLocation "Cert:\CurrentUser\My" `
   -KeyUsage DigitalSignature `
-  -FriendlyName "PDF Local Cert Dev Signing"
+  -FriendlyName "Bureaucrat PDF Dev Signing"
 
 # 2. Export it (the .pfx is what signtool consumes; the .cer is what users trust).
 $pwd = ConvertTo-SecureString -String "devsign" -Force -AsPlainText
@@ -42,7 +42,7 @@ Export-PfxCertificate -Cert $cert -FilePath plc-dev.pfx -Password $pwd | Out-Nul
 Export-Certificate   -Cert $cert -FilePath plc-dev.cer | Out-Null
 
 # 3. Sign the MSIX (signtool ships with the Windows SDK).
-signtool sign /fd SHA256 /a /f plc-dev.pfx /p devsign PdfLocalCert.msix
+signtool sign /fd SHA256 /a /f plc-dev.pfx /p devsign BureaucratPdf.msix
 ```
 
 ### Trust-the-cert install step (document this for testers)
@@ -57,8 +57,8 @@ Import-Certificate -FilePath plc-dev.cer `
   -CertStoreLocation Cert:\LocalMachine\TrustedPeople
 ```
 
-Then install: double-click `PdfLocalCert.msix` (App Installer) or
-`Add-AppxPackage .\PdfLocalCert.msix`.
+Then install: double-click `BureaucratPdf.msix` (App Installer) or
+`Add-AppxPackage .\BureaucratPdf.msix`.
 
 ## Production path (Authenticode OV/EV)
 
@@ -75,7 +75,7 @@ Then install: double-click `PdfLocalCert.msix` (App Installer) or
    ```powershell
    signtool sign /fd SHA256 /sha1 <THUMBPRINT> `
      /tr http://timestamp.digicert.com /td SHA256 `
-     PdfLocalCert.msix
+     BureaucratPdf.msix
    ```
    The `/tr` RFC 3161 timestamp is mandatory — without it the signature expires when the
    certificate does (same rule the core enforces for PAdES B-T).
@@ -84,8 +84,8 @@ Then install: double-click `PdfLocalCert.msix` (App Installer) or
    a `.pfx` or token PIN to the repo or to GitHub secrets in plaintext form.
 5. **Verify before publishing:**
    ```powershell
-   signtool verify /pa /v PdfLocalCert.msix
-   Get-AppxPackageManifest .\PdfLocalCert.msix   # sanity-check identity + dependencies
+   signtool verify /pa /v BureaucratPdf.msix
+   Get-AppxPackageManifest .\BureaucratPdf.msix   # sanity-check identity + dependencies
    ```
 
 ## Microsoft Store (deferred)

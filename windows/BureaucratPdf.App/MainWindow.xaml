@@ -1,0 +1,472 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="BureaucratPdf.App.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:BureaucratPdf.App.ViewModels"
+    xmlns:core="using:BureaucratPdf.Core"
+    mc:Ignorable="d"
+    Title="Bureaucrat PDF">
+
+    <Grid x:Name="RootGrid" RowDefinitions="Auto,Auto,*,Auto">
+        <!-- Command bar -->
+        <CommandBar Grid.Row="0" DefaultLabelPosition="Right" HorizontalAlignment="Left" Background="Transparent">
+            <AppBarButton x:Name="OpenButton" x:Uid="OpenButton" Icon="OpenFile" Label="Open PDF" Click="OnOpenClicked" />
+            <AppBarButton x:Name="NewButton" x:Uid="NewButton" Icon="Add" Label="New" Click="OnNewClicked" IsEnabled="False" />
+            <AppBarButton x:Name="SettingsButton" x:Uid="SettingsButton" Icon="Setting" Label="Settings" Click="OnSettingsClicked" />
+        </CommandBar>
+
+        <!-- Section navigation: Sign / Batch / Verify (mirrors macOS segmented nav) -->
+        <SelectorBar Grid.Row="1" x:Name="SectionBar" HorizontalAlignment="Center"
+                     Margin="0,0,0,8" SelectionChanged="OnSectionChanged">
+            <SelectorBarItem x:Name="SignSectionItem" x:Uid="SignSection" Text="Sign" IsSelected="True" />
+            <SelectorBarItem x:Name="BatchSectionItem" x:Uid="BatchSection" Text="Batch" />
+            <SelectorBarItem x:Name="VerifySectionItem" x:Uid="VerifySection" Text="Verify" />
+        </SelectorBar>
+
+        <!-- Section host -->
+        <Grid Grid.Row="2">
+
+            <!-- ===================== SIGN ===================== -->
+            <Grid x:Name="SignSection" Visibility="{x:Bind ViewModel.SignVisibility, Mode=OneWay}"
+                  ColumnDefinitions="*,320">
+
+                <!-- Left: page viewer OR empty-state drop zone -->
+                <Grid Grid.Column="0" Background="{ThemeResource LayerFillColorDefaultBrush}"
+                      AllowDrop="True" DragOver="OnViewerDragOver" Drop="OnViewerDrop">
+
+                    <!-- Page viewer: continuous vertical scroll of rendered pages -->
+                    <ScrollViewer x:Name="PageScroller" HorizontalScrollMode="Auto"
+                                  HorizontalScrollBarVisibility="Auto" ZoomMode="Enabled"
+                                  MinZoomFactor="1" MaxZoomFactor="4"
+                                  SizeChanged="OnViewerSizeChanged" Padding="16"
+                                  Visibility="{x:Bind ViewModel.PageViewerVisibility, Mode=OneWay}">
+                        <ItemsControl x:Name="PagesItems">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border Margin="0,0,0,16" HorizontalAlignment="Center"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                        <!-- Image + a draw surface on top for placing the signature box -->
+                                        <Grid Width="{Binding DisplayWidth}" Height="{Binding DisplayHeight}">
+                                            <Image Source="{Binding Image}" Stretch="Fill" />
+                                            <Canvas x:Name="DrawSurface" Background="Transparent"
+                                                    PointerPressed="OnPagePointerPressed"
+                                                    PointerMoved="OnPagePointerMoved"
+                                                    PointerReleased="OnPagePointerReleased"
+                                                    Tag="{Binding}">
+                                                <!-- The drawn signature box: live preview of logo + text lines -->
+                                                <Border Canvas.Left="{Binding BoxX}" Canvas.Top="{Binding BoxY}"
+                                                        Width="{Binding BoxW}" Height="{Binding BoxH}"
+                                                        Visibility="{Binding BoxVisibility}"
+                                                        BorderThickness="2" BorderBrush="{ThemeResource AccentFillColorDefaultBrush}"
+                                                        Background="{Binding ElementName=RootGrid, Path=DataContext.PreviewBackgroundBrush}"
+                                                        IsHitTestVisible="False">
+                                                    <!-- Lite live preview: logo + text lines (mirrors the sidebar Appearance preview) -->
+                                                    <StackPanel Orientation="Horizontal" Spacing="4" Padding="4" VerticalAlignment="Center">
+                                                        <Image Source="{Binding ElementName=RootGrid, Path=DataContext.LogoImageSource}"
+                                                               Visibility="{Binding ElementName=RootGrid, Path=DataContext.LogoPreviewVisibility}"
+                                                               Stretch="Uniform" MaxHeight="{Binding BoxH}" VerticalAlignment="Center" />
+                                                        <ItemsControl ItemsSource="{Binding ElementName=RootGrid, Path=DataContext.PreviewLines}"
+                                                                      VerticalAlignment="Center">
+                                                            <ItemsControl.ItemTemplate>
+                                                                <DataTemplate>
+                                                                    <TextBlock Text="{Binding}" FontSize="9" Foreground="Black" TextWrapping="NoWrap" />
+                                                                </DataTemplate>
+                                                            </ItemsControl.ItemTemplate>
+                                                        </ItemsControl>
+                                                    </StackPanel>
+                                                </Border>
+                                            </Canvas>
+                                        </Grid>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+
+                    <!-- Zoom controls (1–4×) -->
+                    <StackPanel Orientation="Horizontal" Spacing="2"
+                                HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,12,12,0"
+                                Padding="2" CornerRadius="6"
+                                Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                                BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1"
+                                Visibility="{x:Bind ViewModel.PageViewerVisibility, Mode=OneWay}">
+                        <Button Click="OnZoomOut" ToolTipService.ToolTip="Zoom out"
+                                Background="Transparent" BorderThickness="0">
+                            <FontIcon Glyph="&#xE71F;" FontSize="14" />
+                        </Button>
+                        <Button Click="OnZoomReset" ToolTipService.ToolTip="Reset zoom"
+                                Background="Transparent" BorderThickness="0">
+                            <FontIcon Glyph="&#xE9A6;" FontSize="14" />
+                        </Button>
+                        <Button Click="OnZoomIn" ToolTipService.ToolTip="Zoom in"
+                                Background="Transparent" BorderThickness="0">
+                            <FontIcon Glyph="&#xE8A3;" FontSize="14" />
+                        </Button>
+                    </StackPanel>
+
+                    <!-- Empty-state drop zone -->
+                    <Border Margin="24" CornerRadius="14" Padding="40"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                            BorderBrush="{ThemeResource AccentFillColorDefaultBrush}" BorderThickness="2"
+                            Visibility="{x:Bind ViewModel.DropZoneVisibility, Mode=OneWay}">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="16">
+                            <FontIcon Glyph="&#xE7C3;" FontSize="48"
+                                      Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Uid="DropZone" Text="Drag a PDF here" Style="{StaticResource SubtitleTextBlockStyle}"
+                                       HorizontalAlignment="Center" />
+                            <Button x:Uid="DropZoneButton" Content="Open PDF" Click="OnOpenClicked"
+                                    Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+                </Grid>
+
+                <!-- Right sidebar: certificate + signature options -->
+                <Border Grid.Column="1" Background="{ThemeResource CardBackgroundFillColorDefaultBrush}"
+                        BorderBrush="{ThemeResource DividerStrokeColorDefaultBrush}" BorderThickness="1,0,0,0">
+                    <Grid RowDefinitions="*,Auto">
+                        <ScrollViewer Grid.Row="0" Padding="20">
+                            <StackPanel Spacing="18">
+
+                                <StackPanel Spacing="8">
+                                    <TextBlock x:Uid="Certificate" Text="Certificate" Style="{StaticResource SubtitleTextBlockStyle}" />
+                                    <ComboBox x:Name="CertCombo"
+                                              x:Uid="CertCombo"
+                                              AutomationProperties.AutomationId="CertCombo"
+                                              HorizontalAlignment="Stretch"
+                                              DropDownOpened="OnCertDropDownOpened"
+                                              PlaceholderText="Select a certificate"
+                                              DisplayMemberPath="CommonName"
+                                              ItemsSource="{x:Bind ViewModel.Identities, Mode=OneWay}"
+                                              SelectedItem="{x:Bind ViewModel.SelectedCert, Mode=TwoWay}" />
+                                    <TextBlock Text="{x:Bind ViewModel.CertDetailText, Mode=OneWay}"
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                </StackPanel>
+
+                                <StackPanel Spacing="2">
+                                    <ToggleSwitch x:Name="VisibleSigToggle"
+                                                  x:Uid="VisibleSigToggle"
+                                                  AutomationProperties.AutomationId="VisibleSigToggle"
+                                                  Header="Visible signature"
+                                                  IsOn="{x:Bind ViewModel.VisibleSignature, Mode=TwoWay}"
+                                                  Toggled="OnVisibleToggled" />
+                                    <TextBlock x:Uid="DrawBoxInstruction" Text="Draw a box on the page to place the signature."
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                    <ToggleSwitch x:Uid="SignAllToggle" Header="Sign all pages" Margin="0,6,0,0"
+                                                  AutomationProperties.AutomationId="SignAllToggle"
+                                                  IsOn="{x:Bind ViewModel.SignAllPages, Mode=TwoWay}"
+                                                  Visibility="{x:Bind ViewModel.SignAllVisibility, Mode=OneWay}" />
+                                    <TeachingTip x:Name="DrawBoxTip"
+                                                 x:Uid="DrawBoxTip"
+                                                 Target="{x:Bind VisibleSigToggle}"
+                                                 Title="Place the signature"
+                                                 Subtitle="Drag a box on the page where the signature should appear."
+                                                 PreferredPlacement="Bottom"
+                                                 IsLightDismissEnabled="True" />
+                                </StackPanel>
+
+                                <!-- Appearance editor (visible signature only) -->
+                                <StackPanel Spacing="10" Visibility="{x:Bind ViewModel.AppearanceVisibility, Mode=OneWay}">
+                                    <TextBlock x:Uid="Appearance" Text="Appearance" Style="{StaticResource SubtitleTextBlockStyle}" />
+
+                                    <!-- Live preview (approximate; bitmap-exact preview arrives in 7.7) -->
+                                    <Border CornerRadius="6" MinHeight="56" Padding="8"
+                                            Background="{x:Bind ViewModel.PreviewBackgroundBrush, Mode=OneWay}"
+                                            BorderBrush="{ThemeResource CardStrokeColorDefaultBrush}" BorderThickness="1">
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Image Source="{x:Bind ViewModel.LogoImageSource, Mode=OneWay}"
+                                                   Visibility="{x:Bind ViewModel.LogoPreviewVisibility, Mode=OneWay}"
+                                                   Stretch="Uniform" MaxWidth="64" VerticalAlignment="Center" />
+                                            <ItemsControl VerticalAlignment="Center"
+                                                          ItemsSource="{x:Bind ViewModel.PreviewLines, Mode=OneWay}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate x:DataType="x:String">
+                                                        <TextBlock Text="{x:Bind}" FontSize="12" Foreground="Black" TextWrapping="Wrap" />
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                        </StackPanel>
+                                    </Border>
+
+                                    <!-- Content -->
+                                    <Expander x:Uid="Content" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                              Header="Content">
+                                        <StackPanel Spacing="6">
+                                            <CheckBox x:Uid="Name" Content="Name" IsChecked="{x:Bind ViewModel.ShowName, Mode=TwoWay}" />
+                                            <CheckBox x:Uid="Label" Content="Label" Margin="20,0,0,0"
+                                                      Visibility="{x:Bind ViewModel.LabelToggleVisibility, Mode=OneWay}"
+                                                      IsChecked="{x:Bind ViewModel.ShowLabel, Mode=TwoWay}" />
+                                            <TextBox Margin="20,0,0,0" PlaceholderText="Firmado por:"
+                                                     Visibility="{x:Bind ViewModel.CustomLabelVisibility, Mode=OneWay}"
+                                                     Text="{x:Bind ViewModel.CustomLabel, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            <CheckBox x:Uid="Date" Content="Date" IsChecked="{x:Bind ViewModel.ShowDate, Mode=TwoWay}" />
+                                            <CheckBox x:Uid="Reason" Content="Reason" IsChecked="{x:Bind ViewModel.ShowReason, Mode=TwoWay}" />
+                                            <TextBox x:Uid="ReasonTextBox" Margin="20,0,0,0" PlaceholderText="e.g. I approve this document"
+                                                     Visibility="{x:Bind ViewModel.ReasonFieldVisibility, Mode=OneWay}"
+                                                     Text="{x:Bind ViewModel.Reason, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                            <CheckBox x:Uid="Location" Content="Location" IsChecked="{x:Bind ViewModel.ShowLocation, Mode=TwoWay}" />
+                                            <TextBox x:Uid="LocationTextBox" Margin="20,0,0,0" PlaceholderText="e.g. Madrid, ES"
+                                                     Visibility="{x:Bind ViewModel.LocationFieldVisibility, Mode=OneWay}"
+                                                     Text="{x:Bind ViewModel.Location, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" />
+                                        </StackPanel>
+                                    </Expander>
+
+                                    <!-- Style -->
+                                    <Expander x:Uid="Style" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                              Header="Style">
+                                        <StackPanel Spacing="6">
+                                            <CheckBox x:Uid="Border" Content="Border" IsChecked="{x:Bind ViewModel.ShowBorder, Mode=TwoWay}" />
+                                            <CheckBox x:Uid="TransparentBackground" Content="Transparent background" IsChecked="{x:Bind ViewModel.TransparentBackground, Mode=TwoWay}" />
+                                            <CheckBox x:Uid="WrapText" Content="Wrap text" IsChecked="{x:Bind ViewModel.WrapText, Mode=TwoWay}" />
+                                            <TextBlock x:Uid="TextSize" Text="Text size" Style="{StaticResource CaptionTextBlockStyle}" />
+                                            <Slider Minimum="6" Maximum="16" StepFrequency="1"
+                                                    Value="{x:Bind ViewModel.FontSize, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Expander>
+
+                                    <!-- Logo + QR badge -->
+                                    <Expander x:Uid="LogoQr" HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch"
+                                              Header="Logo &amp; QR">
+                                        <StackPanel Spacing="6">
+                                            <StackPanel Orientation="Horizontal" Spacing="8">
+                                                <Button x:Uid="ChooseLogo" Content="Choose logo…" Click="OnChooseLogo" />
+                                                <Button x:Uid="ClearLogo" Content="Clear" Click="OnClearLogo"
+                                                        Visibility="{x:Bind ViewModel.LogoClearVisibility, Mode=OneWay}" />
+                                            </StackPanel>
+                                            <TextBlock Text="{x:Bind ViewModel.LogoName, Mode=OneWay}"
+                                                       Style="{StaticResource CaptionTextBlockStyle}"
+                                                       Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <CheckBox x:Uid="QrBadge" Content="QR verification badge"
+                                                      IsChecked="{x:Bind ViewModel.ShowQr, Mode=TwoWay}" />
+                                        </StackPanel>
+                                    </Expander>
+
+                                    <!-- Presets -->
+                                    <StackPanel Spacing="6">
+                                        <TextBlock x:Uid="Presets" Text="Presets" Style="{StaticResource CaptionTextBlockStyle}" />
+                                        <ComboBox x:Uid="PresetsCombo" HorizontalAlignment="Stretch" PlaceholderText="Saved appearances"
+                                                  ItemsSource="{x:Bind ViewModel.Presets, Mode=OneWay}"
+                                                  SelectedItem="{x:Bind ViewModel.SelectedPreset, Mode=TwoWay}" />
+                                        <StackPanel Orientation="Horizontal" Spacing="8">
+                                            <Button x:Uid="SavePreset" Content="Save…" Click="OnSavePreset" />
+                                            <Button x:Uid="DeletePreset" Content="Delete" Click="OnDeletePreset" />
+                                        </StackPanel>
+                                    </StackPanel>
+                                </StackPanel>
+
+                                <StackPanel Spacing="6">
+                                    <ToggleSwitch x:Name="TimestampToggle"
+                                                  x:Uid="TimestampToggle"
+                                                  AutomationProperties.AutomationId="TimestampToggle"
+                                                  Header="Timestamp (B-T)"
+                                                  IsOn="{x:Bind ViewModel.UseTimestamp, Mode=TwoWay}" />
+                                    <TextBlock x:Uid="TimestampInstruction" Text="Add a trusted RFC 3161 timestamp (PAdES B-T)."
+                                               Style="{StaticResource CaptionTextBlockStyle}"
+                                               Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                               TextWrapping="Wrap" />
+                                    <TextBox x:Uid="TsaUrl" Header="TSA URL (RFC 3161)" Margin="0,4,0,0"
+                                             Text="{x:Bind ViewModel.TsaUrl, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"
+                                             Visibility="{x:Bind ViewModel.TsaVisibility, Mode=OneWay}" />
+                                </StackPanel>
+
+                            </StackPanel>
+                        </ScrollViewer>
+
+                        <!-- Bottom: primary action -->
+                        <StackPanel Grid.Row="1" Padding="20" Spacing="8">
+                            <Button x:Name="SignAndSaveButton"
+                                    AutomationProperties.AutomationId="SignAndSaveButton"
+                                    Style="{StaticResource AccentButtonStyle}"
+                                    HorizontalAlignment="Stretch"
+                                    Padding="16,12"
+                                    IsEnabled="{x:Bind ViewModel.CanSign, Mode=OneWay}"
+                                    Click="OnSignClicked">
+                                <StackPanel Orientation="Horizontal" Spacing="8">
+                                    <ProgressRing Width="16" Height="16"
+                                                  IsActive="{x:Bind ViewModel.IsSigning, Mode=OneWay}" />
+                                    <FontIcon Glyph="&#xE70F;" FontSize="16" />
+                                    <TextBlock x:Uid="SignAndSave" Text="Sign and save" FontWeight="SemiBold" FontSize="15" />
+                                </StackPanel>
+                            </Button>
+                        </StackPanel>
+                    </Grid>
+                </Border>
+            </Grid>
+
+            <!-- ===================== BATCH ===================== -->
+            <Grid x:Name="BatchSection" Visibility="{x:Bind ViewModel.BatchVisibility, Mode=OneWay}"
+                  AllowDrop="True" DragOver="OnViewerDragOver" Drop="OnBatchDrop"
+                  Padding="16" RowDefinitions="Auto,*,Auto" RowSpacing="12">
+
+                <!-- Toolbar -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                    <TextBlock x:Uid="BatchSigning" Text="Batch signing" Style="{StaticResource SubtitleTextBlockStyle}"
+                               VerticalAlignment="Center" />
+                    <Button x:Uid="AddFiles" Content="Add files…" Click="OnBatchAdd" />
+                    <Button x:Uid="Clear" Content="Clear" Click="OnBatchClear" />
+                </StackPanel>
+
+                <!-- Empty state OR queue -->
+                <Grid Grid.Row="1">
+                    <Border CornerRadius="14" Padding="40"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                            BorderBrush="{ThemeResource AccentFillColorDefaultBrush}" BorderThickness="2"
+                            Visibility="{x:Bind ViewModel.BatchEmptyVisibility, Mode=OneWay}">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                            <FontIcon Glyph="&#xE8F4;" FontSize="40"
+                                      Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Uid="DragMultiplePdfs" Text="Drag multiple PDFs here" Style="{StaticResource SubtitleTextBlockStyle}"
+                                       HorizontalAlignment="Center" />
+                            <Button x:Uid="AddFiles" Content="Add files…" Click="OnBatchAdd" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <ListView ItemsSource="{x:Bind ViewModel.BatchItems, Mode=OneWay}"
+                              Visibility="{x:Bind ViewModel.BatchListVisibility, Mode=OneWay}"
+                              SelectionMode="None">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:BatchItem">
+                                <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12" Padding="0,8">
+                                    <FontIcon Grid.Column="0" Glyph="{x:Bind Glyph, Mode=OneWay}"
+                                              Foreground="{x:Bind GlyphBrush, Mode=OneWay}"
+                                              VerticalAlignment="Top" Margin="0,2,0,0" />
+                                    <StackPanel Grid.Column="1" Spacing="1">
+                                        <TextBlock Text="{x:Bind FileName}" TextTrimming="CharacterEllipsis" />
+                                        <TextBlock Text="{x:Bind Message, Mode=OneWay}"
+                                                   Style="{StaticResource CaptionTextBlockStyle}"
+                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                   TextWrapping="Wrap" />
+                                    </StackPanel>
+                                </Grid>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+
+                <!-- Bottom bar -->
+                <StackPanel Grid.Row="2" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                    <FontIcon Glyph="&#xE72E;" FontSize="14" Foreground="{ThemeResource SystemFillColorCautionBrush}"
+                              VerticalAlignment="Center" Visibility="{x:Bind ViewModel.ProLockVisibility, Mode=OneWay}" />
+                    <TextBlock Text="{x:Bind ViewModel.BatchSummary, Mode=OneWay}"
+                               Style="{StaticResource CaptionTextBlockStyle}"
+                               Foreground="{ThemeResource TextFillColorSecondaryBrush}" VerticalAlignment="Center" />
+                    <Button Click="OnBatchSignAll" Style="{StaticResource AccentButtonStyle}">
+                        <StackPanel Orientation="Horizontal" Spacing="8">
+                            <ProgressRing Width="16" Height="16" IsActive="{x:Bind ViewModel.BatchRunning, Mode=OneWay}" />
+                            <TextBlock x:Uid="SignAll" Text="Sign all" />
+                        </StackPanel>
+                    </Button>
+                </StackPanel>
+            </Grid>
+
+            <!-- ===================== VERIFY ===================== -->
+            <Grid x:Name="VerifySection" Visibility="{x:Bind ViewModel.VerifyVisibility, Mode=OneWay}"
+                  AllowDrop="True" DragOver="OnViewerDragOver" Drop="OnVerifyDrop"
+                  Padding="16" RowDefinitions="Auto,*,Auto" RowSpacing="12">
+
+                <!-- Toolbar -->
+                <Grid Grid.Row="0" ColumnDefinitions="*,Auto">
+                    <StackPanel Grid.Column="0" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+                        <TextBlock x:Uid="VerifySection" Text="Verify" Style="{StaticResource SubtitleTextBlockStyle}" VerticalAlignment="Center" />
+                        <Button x:Uid="AddFiles" Content="Add files…" Click="OnVerifyAdd" />
+                        <Button x:Uid="Reverify" Content="Reverify" Click="OnVerifyReverify" />
+                        <Button x:Uid="Clear" Content="Clear" Click="OnVerifyClear" />
+                    </StackPanel>
+                    <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="12" VerticalAlignment="Center">
+                        <CheckBox x:Uid="NewestFirst" Content="Newest first" IsChecked="{x:Bind ViewModel.NewestFirst, Mode=TwoWay}" />
+                        <CheckBox x:Uid="OnlyInvalid" Content="Only invalid" IsChecked="{x:Bind ViewModel.OnlyInvalid, Mode=TwoWay}" />
+                    </StackPanel>
+                </Grid>
+
+                <!-- Empty state OR queue -->
+                <Grid Grid.Row="1">
+                    <Border CornerRadius="14" Padding="40"
+                            Background="{ThemeResource CardBackgroundFillColorSecondaryBrush}"
+                            BorderBrush="{ThemeResource AccentFillColorDefaultBrush}" BorderThickness="2"
+                            Visibility="{x:Bind ViewModel.VerifyEmptyVisibility, Mode=OneWay}">
+                        <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center" Spacing="12">
+                            <FontIcon Glyph="&#xE8FB;" FontSize="40"
+                                      Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+                            <TextBlock x:Uid="DragSignedPdfs" Text="Drag signed PDFs here" Style="{StaticResource SubtitleTextBlockStyle}"
+                                       HorizontalAlignment="Center" />
+                            <Button x:Uid="AddFiles" Content="Add files…" Click="OnVerifyAdd" HorizontalAlignment="Center" />
+                        </StackPanel>
+                    </Border>
+
+                    <ListView ItemsSource="{x:Bind ViewModel.VisibleVerifyItems, Mode=OneWay}"
+                              Visibility="{x:Bind ViewModel.VerifyListVisibility, Mode=OneWay}"
+                              SelectionMode="None">
+                        <ListView.ItemTemplate>
+                            <DataTemplate x:DataType="vm:VerifyItem">
+                                <Expander HorizontalAlignment="Stretch" HorizontalContentAlignment="Stretch" Margin="0,4">
+                                    <Expander.Header>
+                                        <Grid ColumnDefinitions="Auto,*,Auto,Auto" ColumnSpacing="10">
+                                            <FontIcon Grid.Column="0" Glyph="{x:Bind Glyph, Mode=OneWay}"
+                                                      Foreground="{x:Bind GlyphBrush, Mode=OneWay}" VerticalAlignment="Center" />
+                                            <TextBlock Grid.Column="1" Text="{x:Bind FileName}" VerticalAlignment="Center"
+                                                       TextTrimming="CharacterEllipsis" />
+                                            <Border Grid.Column="2" Background="{ThemeResource ControlFillColorSecondaryBrush}"
+                                                    CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
+                                                <TextBlock Text="{x:Bind LevelText, Mode=OneWay}"
+                                                           Style="{StaticResource CaptionTextBlockStyle}" />
+                                            </Border>
+                                            <Button Grid.Column="3" Click="OnVerifyRemove" Tag="{x:Bind}"
+                                                    Background="Transparent" BorderThickness="0" Padding="4"
+                                                    ToolTipService.ToolTip="Remove">
+                                                <FontIcon Glyph="&#xE711;" FontSize="12" />
+                                            </Button>
+                                        </Grid>
+                                    </Expander.Header>
+                                    <StackPanel Spacing="8">
+                                        <TextBlock Text="{x:Bind Error, Mode=OneWay}" Foreground="{ThemeResource SystemFillColorCriticalBrush}"
+                                                   Visibility="{x:Bind ErrorVisibility, Mode=OneWay}" TextWrapping="Wrap" />
+                                        <ItemsControl ItemsSource="{x:Bind Results, Mode=OneWay}">
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate x:DataType="core:VerificationResult">
+                                                    <StackPanel Spacing="2" Margin="0,0,0,8">
+                                                        <TextBlock Text="{x:Bind Signer}" Style="{StaticResource BodyStrongTextBlockStyle}" />
+                                                        <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
+                                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                   Text="{x:Bind Issuer}" />
+                                                        <TextBlock Style="{StaticResource CaptionTextBlockStyle}"
+                                                                   Foreground="{ThemeResource TextFillColorSecondaryBrush}"
+                                                                   Text="{x:Bind Detail}" TextWrapping="Wrap" />
+                                                    </StackPanel>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </StackPanel>
+                                </Expander>
+                            </DataTemplate>
+                        </ListView.ItemTemplate>
+                    </ListView>
+                </Grid>
+
+                <!-- Summary -->
+                <TextBlock Grid.Row="2" Text="{x:Bind ViewModel.VerifySummary, Mode=OneWay}"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" />
+            </Grid>
+
+        </Grid>
+
+        <!-- Status -->
+        <Border Grid.Row="3" Padding="16,8" Background="{ThemeResource LayerFillColorDefaultBrush}">
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                <TextBlock Grid.Column="0" Text="{x:Bind ViewModel.StatusText, Mode=OneWay}"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorSecondaryBrush}" TextWrapping="Wrap" />
+                <TextBlock Grid.Column="1" x:Name="VersionText" VerticalAlignment="Center"
+                           Style="{StaticResource CaptionTextBlockStyle}"
+                           Foreground="{ThemeResource TextFillColorTertiaryBrush}" />
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

@@ -4,9 +4,9 @@
 
 <div align="center">
 
-<img src="apple/Resources/logo/pdf-local-cert-logo-gradient.png" width="132" alt="PDF Local Cert logo" />
+<img src="apple/Resources/logo/pdf-local-cert-logo-gradient.png" width="132" alt="Bureaucrat PDF logo" />
 
-# PDF Local Cert
+# Bureaucrat PDF
 
 ### Sign PDFs on your Mac with the certificates you already own.
 #### No Java. No Adobe. No AutoFirma. 100% on your device.
@@ -29,13 +29,13 @@
 
 <br/>
 
-<img src="apple/Resources/demo-screenshot.png" width="900" alt="PDF Local Cert signing a contract with a visible signature, QR badge and timestamp" />
+<img src="apple/Resources/demo-screenshot.png" width="900" alt="Bureaucrat PDF signing a contract with a visible signature, QR badge and timestamp" />
 
 </div>
 
 <br/>
 
-> **Your signature, your key, your machine.** PDF Local Cert reads the X.509 certificates
+> **Your signature, your key, your machine.** Bureaucrat PDF reads the X.509 certificates
 > already in your macOS Keychain (FNMT, DNIe, qualified eIDAS) and produces legally-shaped
 > **PAdES** signatures — without your private key ever leaving the Keychain, and without a
 > single byte leaving your Mac.
@@ -81,7 +81,7 @@ https://github.com/user-attachments/assets/f9d4f247-d69a-44f3-ab1e-9947754edaf4
 
 <div align="center">
 
-| | 🟢 **PDF Local Cert** | 🟡 AutoFirma | 🔴 Adobe Acrobat |
+| | 🟢 **Bureaucrat PDF** | 🟡 AutoFirma | 🔴 Adobe Acrobat |
 |---|:---:|:---:|:---:|
 | **Native macOS app** | ✅ SwiftUI | ❌ Java applet | ✅ |
 | **Reads Keychain certs** | ✅ | ⚠️ clunky | ⚠️ |
@@ -176,7 +176,7 @@ Drag any signed PDF onto the **Verify** tab to check signer, integrity and times
 
 ## 💚 Open source — and sustainable
 
-PDF Local Cert is **open source under [GPL-3.0](LICENSE)**. Two honest ways to use it:
+Bureaucrat PDF is **open source under [GPL-3.0](LICENSE)**. Two honest ways to use it:
 
 <div align="center">
 
@@ -206,7 +206,7 @@ PDF Local Cert is **open source under [GPL-3.0](LICENSE)**. Two honest ways to u
 
 | Part | Path | Role |
 |------|------|------|
-| **SwiftUI shell** | `apple/Sources/PDFLocalCert/` | UI, PDFKit rendering, Keychain enumeration, `SecKeyCreateSignature`, save, verifier |
+| **SwiftUI shell** | `apple/Sources/BureaucratPdf/` | UI, PDFKit rendering, Keychain enumeration, `SecKeyCreateSignature`, save, verifier |
 | **Rust sidecar** | `core/` | PDF byte-range surgery, CMS / PAdES assembly, RFC 3161 TSA client, verification |
 | **Windows shell** | `windows/` | C#/WinUI 3 shell at parity (CNG external-signer); see `windows/README.md` |
 | **Protocol** | `protocol/` | Shared JSON contract + conformance vectors both shells run against |
@@ -243,14 +243,14 @@ hardware-backed keys (DNIe, smartcards) work transparently.
 > **Requirements:** Xcode / Swift toolchain · Rust (`cargo`).
 
 ```sh
-# Ad-hoc signed → apple/build/PDF Local Cert.app
+# Ad-hoc signed → apple/build/Bureaucrat PDF.app
 bash apple/scripts/build.sh
 
 # Or sign with your Apple Developer identity
 SIGN_ID="Apple Development: Your Name (TEAMID)" bash apple/scripts/build.sh
 
 # Run it
-open "apple/build/PDF Local Cert.app"
+open "apple/build/Bureaucrat PDF.app"
 ```
 
 <details>
@@ -276,8 +276,8 @@ certificate. Validated end-to-end for **B-B** and **B-T** (`valid=true, crypto=o
 ```
 core/                          Rust signing sidecar (shared by all shells)
 apple/                         macOS shell (SwiftUI)
-  Sources/PDFLocalCert/        SwiftUI app
-  Sources/PDFLocalCertKit/     shared helpers (coordinate mapping…)
+  Sources/BureaucratPdf/        SwiftUI app
+  Sources/BureaucratPdfKit/     shared helpers (coordinate mapping…)
   Resources/                   Info.plist, entitlements, icons, localized strings, logo
   scripts/                     build.sh, make-icns.sh
 windows/                       Windows shell (C#/WinUI 3) — see windows/README.md

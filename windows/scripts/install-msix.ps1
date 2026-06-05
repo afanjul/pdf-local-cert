@@ -13,17 +13,17 @@
   (the chain is publicly trusted) -- see windows/RELEASE.md.
 
 .PARAMETER Msix
-  Path to the signed .msix (default: ..\build\PdfLocalCert.msix, i.e. windows\build).
+  Path to the signed .msix (default: ..\build\BureaucratPdf.msix, i.e. windows\build).
 
 .PARAMETER Cer
   Path to the exported public cert (default: same basename as the MSIX, .cer).
 
 .EXAMPLE
   # Run in an elevated PowerShell:
-  pwsh windows/scripts/install-msix.ps1 -Msix C:\plc\PdfLocalCert.msix
+  pwsh windows/scripts/install-msix.ps1 -Msix C:\plc\BureaucratPdf.msix
 #>
 param(
-    [string] $Msix = "$PSScriptRoot\..\build\PdfLocalCert.msix",
+    [string] $Msix = "$PSScriptRoot\..\build\BureaucratPdf.msix",
     [string] $Cer
 )
 
@@ -46,7 +46,7 @@ Write-Host "Importing $Cer into LocalMachine\TrustedPeople ..."
 Import-Certificate -FilePath $Cer -CertStoreLocation Cert:\LocalMachine\TrustedPeople | Out-Null
 
 # --- install (reinstall-safe) -----------------------------------------------
-$pkgName = "Palbin.PDFLocalCert"
+$pkgName = "Palbin.BureaucratPdf"
 $existing = Get-AppxPackage -Name $pkgName -ErrorAction SilentlyContinue
 if ($existing) {
     Write-Host "Removing existing install ($($existing.Version)) ..."
@@ -62,7 +62,7 @@ Write-Host "Installed:"
 Write-Host "  $($pkg.PackageFullName)"
 Write-Host "  Architecture: $($pkg.Architecture)"
 Write-Host ""
-Write-Host "Launch from the Start menu (PDF Local Cert), then smoke-test:"
+Write-Host "Launch from the Start menu (Bureaucrat PDF), then smoke-test:"
 Write-Host "  1. Open a PDF      2. Sign (pick a cert)      3. Verify"
 Write-Host ""
 Write-Host "To uninstall:"

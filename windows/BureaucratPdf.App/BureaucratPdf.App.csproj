@@ -1,0 +1,75 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <!--
+    WinUI 3 (Windows App SDK) desktop shell. Unpackaged for now (WindowsPackageType
+    = None) so it builds/runs without MSIX; the MSIX packaging project is Phase 5.1.
+    Targets the Win10 17763 floor from the design via TargetPlatformMinVersion while
+    compiling against a newer SDK.
+
+    Deployment model (validated on the Win11 VM — see windows/README.md):
+      * .NET runtime  -> SELF-CONTAINED (publish -r win-x64, self-contained true):
+        the user never installs .NET.
+      * Windows App SDK -> FRAMEWORK-DEPENDENT (WindowsAppSDKSelfContained=false):
+        WinAppSDK self-contained crashes WinUI unpackaged apps at startup
+        (0xc000027b in combase). Instead the machine needs the WinAppSDK 1.7
+        runtime + its x64 DDLM, provisioned once via the official redist
+        (windowsappruntimeinstall-x64.exe). The MSIX in Phase 5 removes this step.
+  -->
+  <PropertyGroup>
+    <OutputType>WinExe</OutputType>
+    <TargetFramework>net8.0-windows10.0.19041.0</TargetFramework>
+    <TargetPlatformMinVersion>10.0.17763.0</TargetPlatformMinVersion>
+    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
+    <Platforms>x64</Platforms>
+    <UseWinUI>true</UseWinUI>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>latest</LangVersion>
+    <RootNamespace>BureaucratPdf.App</RootNamespace>
+    <!-- Project keeps the .App suffix to distinguish it from BureaucratPdf.Core, but the
+         shipped binary is just BureaucratPdf.exe (no ugly ".App." in the product name). -->
+    <AssemblyName>BureaucratPdf</AssemblyName>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <DefaultLanguage>en-US</DefaultLanguage>
+    <WindowsPackageType>None</WindowsPackageType>
+    <WindowsAppSDKSelfContained>false</WindowsAppSDKSelfContained>
+    <EnableMsixTooling>true</EnableMsixTooling>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.WindowsAppSDK" Version="1.7.250606001" />
+    <PackageReference Include="Microsoft.Windows.SDK.BuildTools" Version="10.0.26100.4654" />
+    <PackageReference Include="System.Security.Cryptography.ProtectedData" Version="8.0.0" />
+    <!-- Parity phase 7.0: one shared ObservableObject view model (mirrors macOS AppModel). -->
+    <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.0" />
+    <!-- Parity phase 7.7: QR badge generation (pure-managed, no native deps). -->
+    <PackageReference Include="QRCoder" Version="1.6.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\BureaucratPdf.Core\BureaucratPdf.Core.csproj" />
+  </ItemGroup>
+
+  <!-- App tile/logo assets (Start menu, taskbar, Store, splash). Branded from the
+       shared Bureaucrat PDF logo; replaces the Windows App SDK placeholder images.
+       MakePri indexes the scale-*/targetsize-* qualifiers from the file names. -->
+  <ItemGroup>
+    <Content Include="Images\**\*.png">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+  <!--
+    Phase 5.1: bundle the cross-compiled Rust core sidecar at the package root so
+    CoreClient.ResolveExePath() finds it beside the app (both `dotnet publish` output
+    and the MSIX). Guarded by Exists so a core-less checkout / host-only unit-test
+    build still succeeds; CI (5.4) and the VM publish drop the exe before packing.
+  -->
+  <ItemGroup Condition="Exists('..\..\core\target\x86_64-pc-windows-msvc\release\bureaucratpdf-core.exe')">
+    <Content Include="..\..\core\target\x86_64-pc-windows-msvc\release\bureaucratpdf-core.exe">
+      <Link>bureaucratpdf-core.exe</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
+  </ItemGroup>
+
+</Project>

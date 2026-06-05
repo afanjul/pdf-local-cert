@@ -1,4 +1,4 @@
-# AGENTS.md — PDF Local Cert
+# AGENTS.md — Bureaucrat PDF
 
 Canonical agent guide for this repo. Read this first.
 
@@ -13,7 +13,7 @@ sign the core-provided digest through the platform key API (external-signer patt
 
 | Dir | What |
 |---|---|
-| `core/` | Shared Rust core. Builds `pdflocalcert-core` (the protocol binary, `.exe` on Windows). |
+| `core/` | Shared Rust core. Builds `bureaucratpdf-core` (the protocol binary, `.exe` on Windows). |
 | `protocol/` | Line-delimited JSON protocol spec the shells and core speak. |
 | `apple/` | macOS/iOS shell (Swift). Signs via SecKey/Keychain. |
 | `windows/` | Windows shell (C# / WinUI 3). Signs via CNG + Windows cert store. See `windows/README.md`, `windows/RELEASE.md`. |
@@ -76,12 +76,12 @@ cd core && cargo build --release   # see memory note re: cargo network quirk
 ```
 
 ### Windows shell (on a Windows host over SSH)
-Solution `windows/PdfLocalCert.sln` ties three projects: `PdfLocalCert.Core` (UI-free
-logic, unit-tested on any host), `PdfLocalCert.App` (WinUI 3 shell, ships as
-`PdfLocalCert.exe`), `PdfLocalCert.Core.Tests`. **x64 only** (runs under x64 emulation
+Solution `windows/BureaucratPdf.sln` ties three projects: `BureaucratPdf.Core` (UI-free
+logic, unit-tested on any host), `BureaucratPdf.App` (WinUI 3 shell, ships as
+`BureaucratPdf.exe`), `BureaucratPdf.Core.Tests`. **x64 only** (runs under x64 emulation
 on the ARM box — do not build arm64).
 
-Unit tests run headless anywhere: `dotnet test windows\PdfLocalCert.Core.Tests`.
+Unit tests run headless anywhere: `dotnet test windows\BureaucratPdf.Core.Tests`.
 
 **Run the app = MSIX, always.** There is no loose-`.exe` dev path — it was tried and
 abandoned (see "Why MSIX-only" below). Build → pack → install:
@@ -89,9 +89,9 @@ abandoned (see "Why MSIX-only" below). Build → pack → install:
 # winvm has only Windows PowerShell (no pwsh); invoke .ps1 with &, not pwsh.
 # 1. payload MUST be WindowsPackageType=MSIX (a None-typed payload silently exits
 #    inside a package — packaged apps get the runtime from the dependency graph).
-dotnet publish windows\PdfLocalCert.App -c Release -r win-x64 `
+dotnet publish windows\BureaucratPdf.App -c Release -r win-x64 `
   --self-contained true -p:WindowsPackageType=MSIX -o <payload>
-# 2. pack + dev self-sign -> windows\build\PdfLocalCert.msix
+# 2. pack + dev self-sign -> windows\build\BureaucratPdf.msix
 & windows\scripts\pack-msix.ps1 -PublishDir <payload>
 # 3. install (elevated, one-time cert trust); launch from the Start menu
 & windows\scripts\install-msix.ps1
@@ -125,5 +125,5 @@ Burned a long session proving this. MSIX sidesteps both via its dependency graph
 - Build outputs are **per-platform**, never at repo root: `apple/build/` (the `.app`/dmg,
   via `apple/scripts/build.sh`), `windows/build/` (the `.msix`, via `pack-msix.ps1`), and
   standard `*/bin/`,`*/obj/` for .NET. All gitignored. Don't reintroduce a root `build/`.
-- Stale `windows/PdfLocalCert.App/bin/.../win-x64/*.exe` on the Mac is a leftover sync,
+- Stale `windows/BureaucratPdf.App/bin/.../win-x64/*.exe` on the Mac is a leftover sync,
   not a local build — macOS can't compile the WinUI shell.

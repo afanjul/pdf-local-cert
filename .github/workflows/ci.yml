@@ -46,10 +46,10 @@ jobs:
       - name: Upload core binary
         uses: actions/upload-artifact@v4
         with:
-          name: pdflocalcert-core-${{ matrix.os }}
+          name: bureaucratpdf-core-${{ matrix.os }}
           path: |
-            core/target/release/pdflocalcert-core
-            core/target/release/pdflocalcert-core.exe
+            core/target/release/bureaucratpdf-core
+            core/target/release/bureaucratpdf-core.exe
           if-no-files-found: ignore
 
   apple:
@@ -83,18 +83,18 @@ jobs:
       - name: Build core (Windows triple)
         working-directory: core
         # Build to the explicit triple path so the app's sidecar Content Include
-        # (core/target/x86_64-pc-windows-msvc/release/pdflocalcert-core.exe) resolves.
+        # (core/target/x86_64-pc-windows-msvc/release/bureaucratpdf-core.exe) resolves.
         run: cargo build --release --locked --target x86_64-pc-windows-msvc
 
       - name: Unit tests (CoordinateMapper, etc.)
-        run: dotnet test windows/PdfLocalCert.Core.Tests -c Release
+        run: dotnet test windows/BureaucratPdf.Core.Tests -c Release
 
       - name: Publish app (self-contained x64)
-        run: dotnet publish windows/PdfLocalCert.App -c Release -r win-x64 --self-contained true -o publish/win-x64
+        run: dotnet publish windows/BureaucratPdf.App -c Release -r win-x64 --self-contained true -o publish/win-x64
 
       - name: Upload app artifact
         uses: actions/upload-artifact@v4
         with:
-          name: PdfLocalCert-win-x64
+          name: BureaucratPdf-win-x64
           path: publish/win-x64
           if-no-files-found: error

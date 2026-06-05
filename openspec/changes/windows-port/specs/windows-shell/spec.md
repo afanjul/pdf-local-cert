@@ -49,11 +49,11 @@ The Windows shell SHALL let the user verify a PDF and display each signature's v
 - **THEN** the app reports that no signature was found
 
 ### Requirement: Spawn the core sidecar over stdio
-The Windows shell SHALL invoke the bundled `pdflocalcert-core.exe` as a child process, exchanging one JSON request line and reading one JSON response line per call, and SHALL locate the binary inside the installed package with a development fallback.
+The Windows shell SHALL invoke the bundled `bureaucratpdf-core.exe` as a child process, exchanging one JSON request line and reading one JSON response line per call, and SHALL locate the binary inside the installed package with a development fallback.
 
 #### Scenario: Core located in the package
 - **WHEN** the app runs from its installed MSIX
-- **THEN** it finds and launches the bundled `pdflocalcert-core.exe`
+- **THEN** it finds and launches the bundled `bureaucratpdf-core.exe`
 
 #### Scenario: Core returns an error
 - **WHEN** the core responds with `{"status":"error",...}`
