@@ -49,8 +49,8 @@ Keychain (external/callback signer).
 ## Build / run / test
 
 ```sh
-bash scripts/build.sh          # -> build/PDF Local Cert.app (ad-hoc signed)
-open build/PDF Local Cert.app
+bash apple/scripts/build.sh    # -> apple/build/PDF Local Cert.app (ad-hoc signed)
+open "apple/build/PDF Local Cert.app"
 ```
 - **cargo network quirk:** the rtk hook sandboxes a bare `cargo` and breaks crates.io.
   Use absolute path + git index: `scripts/build.sh` sets `CARGO=/opt/homebrew/bin/cargo`

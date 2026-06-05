@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  push:
+    branches: [main, windows-port]
+  pull_request:
+    branches: [main]
+
+# Cancel superseded runs on the same ref.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core:
+    name: core + conformance (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    defaults:
+      run:
+        working-directory: core
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache cargo
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            core/target
+          key: ${{ matrix.os }}-cargo-${{ hashFiles('core/Cargo.lock') }}
+
+      - name: Build core (release)
+        run: cargo build --release --locked
+
+      - name: Conformance vectors
+        run: cargo test --test conformance --locked
+
+      - name: Upload core binary
+        uses: actions/upload-artifact@v4
+        with:
+          name: pdflocalcert-core-${{ matrix.os }}
+          path: |
+            core/target/release/pdflocalcert-core
+            core/target/release/pdflocalcert-core.exe
+          if-no-files-found: ignore
+
+  apple:
+    name: macOS .app
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build .app (ad-hoc signed)
+        run: bash apple/scripts/build.sh
+      - name: swift test
+        working-directory: apple
+        run: swift test
+
+  windows-app:
+    name: Windows shell (C# + tests + publish)
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-pc-windows-msvc
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 8.0.x
+
+      - name: Build core (Windows triple)
+        working-directory: core
+        # Build to the explicit triple path so the app's sidecar Content Include
+        # (core/target/x86_64-pc-windows-msvc/release/pdflocalcert-core.exe) resolves.
+        run: cargo build --release --locked --target x86_64-pc-windows-msvc
+
+      - name: Unit tests (CoordinateMapper, etc.)
+        run: dotnet test windows/PdfLocalCert.Core.Tests -c Release
+
+      - name: Publish app (self-contained x64)
+        run: dotnet publish windows/PdfLocalCert.App -c Release -r win-x64 --self-contained true -o publish/win-x64
+
+      - name: Upload app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: PdfLocalCert-win-x64
+          path: publish/win-x64
+          if-no-files-found: error

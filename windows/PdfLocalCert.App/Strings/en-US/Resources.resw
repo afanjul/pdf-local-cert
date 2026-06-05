@@ -1,0 +1,113 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="xml:space" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype"><value>text/microsoft-resx</value></resheader>
+  <resheader name="version"><value>2.0</value></resheader>
+  <resheader name="reader"><value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+  <resheader name="writer"><value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value></resheader>
+
+  <data name="OpenButton.Label"><value>Open PDF</value></data>
+  <data name="NewButton.Label"><value>New</value></data>
+  <data name="SettingsButton.Label"><value>Settings</value></data>
+  <data name="SignSection.Text"><value>Sign</value></data>
+  <data name="BatchSection.Text"><value>Batch</value></data>
+  <data name="VerifySection.Text"><value>Verify</value></data>
+  <data name="ZoomOut.ToolTip"><value>Zoom out</value></data>
+  <data name="ZoomReset.ToolTip"><value>Reset zoom</value></data>
+  <data name="ZoomIn.ToolTip"><value>Zoom in</value></data>
+  <data name="DropZone.Text"><value>Drag a PDF here</value></data>
+  <data name="DropZoneButton.Content"><value>Open PDF</value></data>
+  <data name="Certificate.Text"><value>Certificate</value></data>
+  <data name="CertCombo.PlaceholderText"><value>Select a certificate</value></data>
+  <data name="VisibleSigToggle.Header"><value>Visible signature</value></data>
+  <data name="DrawBoxInstruction.Text"><value>Draw a box on the page to place the signature.</value></data>
+  <data name="SignAllToggle.Header"><value>Sign all pages</value></data>
+  <data name="DrawBoxTip.Title"><value>Place the signature</value></data>
+  <data name="DrawBoxTip.Subtitle"><value>Drag a box on the page where the signature should appear.</value></data>
+  <data name="Appearance.Text"><value>Appearance</value></data>
+  <data name="Content.Header"><value>Content</value></data>
+  <data name="Name.Content"><value>Name</value></data>
+  <data name="Label.Content"><value>Label</value></data>
+  <data name="Date.Content"><value>Date</value></data>
+  <data name="Reason.Content"><value>Reason</value></data>
+  <data name="ReasonTextBox.PlaceholderText"><value>e.g. I approve this document</value></data>
+  <data name="Location.Content"><value>Location</value></data>
+  <data name="LocationTextBox.PlaceholderText"><value>e.g. Madrid, ES</value></data>
+  <data name="Style.Header"><value>Style</value></data>
+  <data name="Border.Content"><value>Border</value></data>
+  <data name="TransparentBackground.Content"><value>Transparent background</value></data>
+  <data name="WrapText.Content"><value>Wrap text</value></data>
+  <data name="TextSize.Text"><value>Text size</value></data>
+  <data name="LogoQr.Header"><value>Logo &amp; QR</value></data>
+  <data name="ChooseLogo.Content"><value>Choose logo…</value></data>
+  <data name="ClearLogo.Content"><value>Clear</value></data>
+  <data name="QrBadge.Content"><value>QR verification badge</value></data>
+  <data name="Presets.Text"><value>Presets</value></data>
+  <data name="PresetsCombo.PlaceholderText"><value>Saved appearances</value></data>
+  <data name="SavePreset.Content"><value>Save…</value></data>
+  <data name="DeletePreset.Content"><value>Delete</value></data>
+  <data name="TimestampToggle.Header"><value>Timestamp (B-T)</value></data>
+  <data name="TimestampInstruction.Text"><value>Add a trusted RFC 3161 timestamp (PAdES B-T).</value></data>
+  <data name="TsaUrl.Header"><value>TSA URL (RFC 3161)</value></data>
+  <data name="SignAndSave.Text"><value>Sign and save</value></data>
+  <data name="BatchSigning.Text"><value>Batch signing</value></data>
+  <data name="AddFiles.Content"><value>Add files…</value></data>
+  <data name="Clear.Content"><value>Clear</value></data>
+  <data name="DragMultiplePdfs.Text"><value>Drag multiple PDFs here</value></data>
+  <data name="SignAll.Text"><value>Sign all</value></data>
+  <data name="Reverify.Content"><value>Reverify</value></data>
+  <data name="NewestFirst.Content"><value>Newest first</value></data>
+  <data name="OnlyInvalid.Content"><value>Only invalid</value></data>
+  <data name="DragSignedPdfs.Text"><value>Drag signed PDFs here</value></data>
+  <data name="Remove.ToolTip"><value>Remove</value></data>
+  <data name="SettingsDialog.Title"><value>Settings</value></data>
+  <data name="SettingsDialog.CloseButtonText"><value>Close</value></data>
+  <data name="AppearanceSection.Text"><value>Appearance</value></data>
+  <data name="Theme.Header"><value>Theme</value></data>
+  <data name="ThemeSystem.Content"><value>System</value></data>
+  <data name="ThemeLight.Content"><value>Light</value></data>
+  <data name="ThemeDark.Content"><value>Dark</value></data>
+  <data name="Language.Header"><value>Language</value></data>
+  <data name="LanguageSystem.Content"><value>System</value></data>
+  <data name="LanguageSpanish.Content"><value>Español</value></data>
+  <data name="LanguageEnglish.Content"><value>English</value></data>
+  <data name="LanguageRestart.Text"><value>Language changes take full effect after restarting the app.</value></data>
+  <data name="License.Text"><value>License</value></data>
+  <data name="LicenseKey.PlaceholderText"><value>PDFS-XXXX-XXXX-XXXX</value></data>
+  <data name="LicenseKey.Header"><value>Enter a license key to unlock Pro</value></data>
+  <data name="Activate.Content"><value>Activate</value></data>
+  <data name="Deactivate.Content"><value>Deactivate Pro</value></data>
+  <data name="Suffix.Text"><value>Signed file name suffix</value></data>
+  <data name="Suffix.PlaceholderText"><value>-firmado</value></data>
+  <data name="SuffixHelp.Text"><value>Appended to the default save name: name + suffix + .pdf</value></data>
+  <data name="OpenAfterSign.Content"><value>Open the signed PDF after signing</value></data>
+  <data name="OpenAfterSignHelp.Text"><value>Opens the result in your default PDF viewer and keeps the original loaded, so you can sign it again.</value></data>
+  <data name="About.Text"><value>About</value></data>
+  <data name="AboutApp.Text"><value>PDF Local Cert for Windows</value></data>
+</root>

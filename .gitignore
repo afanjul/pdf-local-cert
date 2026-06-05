@@ -10,13 +10,19 @@
 core/target/
 target/
 
-# Local app/package builds (the built app + dmg live here)
+# C# / .NET build output (windows/ shell + spike)
+**/bin/
+**/obj/
+
+# Local app/package builds, per platform: apple/build (the .app + dmg),
+# windows/build (the .msix). Bare pattern matches the dir at any depth.
 build/
 DerivedData/
 .local-build/
 
 # Large 4K demo masters — only the 1080p versions are published in the README
 Resources/*-4K.mp4
+apple/Resources/*-4K.mp4
 
 # Secrets / signing material
 *.p12
