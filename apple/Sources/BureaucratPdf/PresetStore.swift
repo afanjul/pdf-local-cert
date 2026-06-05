@@ -11,7 +11,7 @@ struct AppearancePreset: Codable, Identifiable, Equatable, Sendable {
 enum PresetStore {
     private static var fileURL: URL {
         let base = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask)[0]
-            .appendingPathComponent("PDF-Local-Cert", isDirectory: true)
+            .appendingPathComponent("Bureaucrat-PDF", isDirectory: true)
         try? FileManager.default.createDirectory(at: base, withIntermediateDirectories: true)
         return base.appendingPathComponent("presets.json")
     }

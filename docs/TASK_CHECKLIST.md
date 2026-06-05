@@ -101,7 +101,7 @@ Deviations from the original plan (intentional, for solo speed):
 - [ ] In-repo automated test/CI, sign-success metrics, crash reporting — **not done**.
 - [ ] TestFlight/beta — **not done**.
 
-**Hard-won Adobe PAdES fixes applied this build (see memory `pdf-local-cert-build`):**
+**Hard-won Adobe PAdES fixes applied this build (see memory `bureaucrat-pdf-build`):**
 - [x] `/ByteRange` integers without leading zeros (space-padded region).
 - [x] `/ByteRange` gap excludes BOTH `<` `>` of `/Contents` (the `/Contents illegal data` cause).
 - [x] `/M` signing time + `/Name` in Sig dict.

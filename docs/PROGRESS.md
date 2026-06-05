@@ -77,7 +77,7 @@ the `/Contents` boundary check).
 3. Sig dict needs `/M (D:YYYYMMDDHHmmSS+00'00')` and `/Name (...)`.
 4. Verifier must pick the signer cert by `SignerInfo` issuer+serial — the CMS cert set also
    holds CA/TSA/OCSP certs (first cert was the OCSP responder).
-(Full notes: memory file `pdf-local-cert-build`.)
+(Full notes: memory file `bureaucrat-pdf-build`.)
 
 ## Known gaps / deferred
 

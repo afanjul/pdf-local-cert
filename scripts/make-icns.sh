@@ -1,11 +1,11 @@
 #!/usr/bin/env bash
-# Regenerate Resources/AppIcon.icns from the master logo.
-# Run after editing Resources/logo/pdf-local-cert-logo.png, then rebuild the app.
+# Regenerate apple/Resources/AppIcon.icns from the master logo.
+# Run after editing apple/Resources/logo/bureaucrat-pdf-logo.png, then rebuild the app.
 set -euo pipefail
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"; cd "$ROOT"
 
-SRC="Resources/logo/pdf-local-cert-logo.png"
-OUT="Resources/AppIcon.iconset"
+SRC="apple/Resources/logo/bureaucrat-pdf-logo.png"
+OUT="apple/Resources/AppIcon.iconset"
 rm -rf "$OUT"; mkdir -p "$OUT"
 
 sips -z 1024 1024 "$SRC" --out /tmp/icon-master-1024.png >/dev/null
@@ -21,6 +21,7 @@ sips -z 512 512 "$M" --out "$OUT/icon_256x256@2x.png" >/dev/null
 sips -z 512 512 "$M" --out "$OUT/icon_512x512.png"    >/dev/null
 cp "$M"             "$OUT/icon_512x512@2x.png"
 
-iconutil -c icns "$OUT" -o Resources/AppIcon.icns
+iconutil -c icns "$OUT" -o apple/Resources/AppIcon.icns
 rm -rf "$OUT"
-echo "✓ Resources/AppIcon.icns"
+echo "✓ apple/Resources/AppIcon.icns"
+

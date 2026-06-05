@@ -51,6 +51,25 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72f5acc6cb2ba439de613abc23857ec3d78374d8ed5ac84e9d11336e87da8649"
 
 [[package]]
+name = "bureaucratpdf-core"
+version = "0.1.1"
+dependencies = [
+ "base64",
+ "cms",
+ "const-oid",
+ "der",
+ "flate2",
+ "lopdf",
+ "rsa",
+ "serde",
+ "serde_json",
+ "sha2",
+ "spki",
+ "ureq",
+ "x509-cert",
+]
+
+[[package]]
 name = "cc"
 version = "1.2.62"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -619,25 +638,6 @@ name = "once_cell"
 version = "1.21.4"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9f7c3e4beb33f85d45ae3e3a1792185706c8e16d043238c593331cc7cd313b50"
-
-[[package]]
-name = "bureaucratpdf-core"
-version = "0.1.0"
-dependencies = [
- "base64",
- "cms",
- "const-oid",
- "der",
- "flate2",
- "lopdf",
- "rsa",
- "serde",
- "serde_json",
- "sha2",
- "spki",
- "ureq",
- "x509-cert",
-]
 
 [[package]]
 name = "pem-rfc7468"

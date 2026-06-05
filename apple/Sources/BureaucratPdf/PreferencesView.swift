@@ -112,7 +112,7 @@ private struct LicenseSettingsTab: View {
 // MARK: - About
 
 private struct AboutTab: View {
-    private let githubURL = URL(string: "https://github.com/afanjul/pdf-local-cert")!
+    private let githubURL = URL(string: "https://github.com/afanjul/bureaucrat-pdf")!
 
     private var version: String {
         let short = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"

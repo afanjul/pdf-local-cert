@@ -71,14 +71,14 @@
 /* License tab */
 "license_management" = "License management";
 "license_active" = "License active";
-"license_active_desc" = "You can use PDF Local Cert Pro on all your personal devices.";
+"license_active_desc" = "You can use Bureaucrat PDF Pro on all your personal devices.";
 "deactivate_license" = "Deactivate license";
 "free_plan" = "Free plan";
 "free_signs_status" = "%d of %d free signatures used this month.";
 "enter_license_key" = "Enter license key";
 
 /* PaywallView */
-"pdf_local_cert_pro" = "PDF Local Cert Pro";
+"bureaucrat_pdf_pro" = "Bureaucrat PDF Pro";
 "feature_custom_placement" = "Place signature anywhere (custom box)";
 "feature_appearance" = "Configurable appearance + handwritten image";
 "feature_presets" = "Preset settings";

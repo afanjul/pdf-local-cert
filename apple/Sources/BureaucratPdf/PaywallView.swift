@@ -11,7 +11,7 @@ struct PaywallView: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
-            Text(NSLocalizedString("pdf_local_cert_pro", comment: "")).font(.title2).bold()
+            Text(NSLocalizedString("bureaucrat_pdf_pro", comment: "")).font(.title2).bold()
 
             VStack(alignment: .leading, spacing: 6) {
                 feature(NSLocalizedString("feature_custom_placement", comment: ""))

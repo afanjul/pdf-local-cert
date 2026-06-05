@@ -4,7 +4,7 @@
 
 <div align="center">
 
-<img src="apple/Resources/logo/pdf-local-cert-logo-gradient.png" width="132" alt="Bureaucrat PDF logo" />
+<img src="apple/Resources/logo/bureaucrat-pdf-logo-gradient.png" width="132" alt="Bureaucrat PDF logo" />
 
 # Bureaucrat PDF
 
@@ -20,7 +20,7 @@
 </p>
 
 <p>
-  <a href="https://github.com/afanjul/pdf-local-cert/releases"><b>⬇️&nbsp; Download</b></a>
+  <a href="https://github.com/afanjul/bureaucrat-pdf/releases"><b>⬇️&nbsp; Download</b></a>
   &nbsp;·&nbsp;
   <a href="#-build-from-source"><b>🛠️&nbsp; Build from source</b></a>
   &nbsp;·&nbsp;

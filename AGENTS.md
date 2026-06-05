@@ -40,7 +40,7 @@ Both configured in `~/.ssh/config`, both auth with `~/.ssh/plc_win_vm`.
 `$HOME` on the remotes is `C:\Users\aleksdj`.
 
 **`winvm` sees this repo directly** via a Parallels shared folder — the Mac home is
-mounted at `\\Mac\Home`, so this repo is live at `\\Mac\Home\apps\pdf-local-cert`
+mounted at `\\Mac\Home`, so this repo is live at `\\Mac\Home\apps\bureaucrat-pdf`
 (no clone/sync; same bytes as the Mac working tree, including uncommitted edits).
 `winx64` has no such share — it needs a real clone before it can build.
 
@@ -101,7 +101,7 @@ dotnet publish windows\BureaucratPdf.App -c Release -r win-x64 `
 MSIX/self-contained targets) rejects UNC working dirs (`c1010070 ... volume label syntax
 is incorrect`). subst a drive letter onto the repo first, build from there:
 ```powershell
-subst S: \\Mac\Home\apps\pdf-local-cert; Set-Location S:\windows
+subst S: \\Mac\Home\apps\bureaucrat-pdf; Set-Location S:\windows
 # ...dotnet publish... then:
 Set-Location C:\; subst S: /d
 ```

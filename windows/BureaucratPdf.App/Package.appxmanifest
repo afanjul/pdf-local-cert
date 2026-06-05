@@ -15,7 +15,7 @@
   <Identity
     Name="Palbin.BureaucratPdf"
     Publisher="CN=Bureaucrat PDF (Dev)"
-    Version="1.0.15.0"
+    Version="1.0.16.0"
     ProcessorArchitecture="x64" />
 
   <Properties>
