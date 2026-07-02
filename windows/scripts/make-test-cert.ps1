@@ -35,7 +35,7 @@ $ErrorActionPreference = "Stop"
 
 $common = @{
     Type              = "Custom"
-    Subject           = "CN=$Name, O=PDF Local Cert, C=ES"
+    Subject           = "CN=$Name, O=Bureaucrat PDF, C=ES"
     KeyUsage          = "DigitalSignature"
     KeyUsageProperty  = "Sign"
     KeyExportPolicy   = "Exportable"

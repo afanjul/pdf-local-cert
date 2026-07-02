@@ -19,6 +19,7 @@ target/
 build/
 DerivedData/
 .local-build/
+samples
 
 # Large 4K demo masters — only the 1080p versions are published in the README
 Resources/*-4K.mp4
@@ -38,3 +39,6 @@ apple/Resources/*-4K.mp4
 
 # Local assistant/tooling state
 .claude/
+.agents
+.factory
+.opencode

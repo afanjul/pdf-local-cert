@@ -109,5 +109,5 @@
   <data name="OpenAfterSign.Content"><value>Abrir el PDF firmado después de firmar</value></data>
   <data name="OpenAfterSignHelp.Text"><value>Abre el resultado en tu visor de PDF predeterminado y mantiene el original cargado, para que puedas firmarlo de nuevo.</value></data>
   <data name="About.Text"><value>Acerca de</value></data>
-  <data name="AboutApp.Text"><value>PDF Local Cert para Windows</value></data>
+  <data name="AboutApp.Text"><value>Bureaucrat PDF para Windows</value></data>
 </root>

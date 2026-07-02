@@ -109,5 +109,5 @@
   <data name="OpenAfterSign.Content"><value>Open the signed PDF after signing</value></data>
   <data name="OpenAfterSignHelp.Text"><value>Opens the result in your default PDF viewer and keeps the original loaded, so you can sign it again.</value></data>
   <data name="About.Text"><value>About</value></data>
-  <data name="AboutApp.Text"><value>PDF Local Cert for Windows</value></data>
+  <data name="AboutApp.Text"><value>Bureaucrat PDF for Windows</value></data>
 </root>
